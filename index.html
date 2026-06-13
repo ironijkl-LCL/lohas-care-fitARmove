@@ -27,6 +27,8 @@ body {
 
 #startScreen {
   background:linear-gradient(#0f2027,#203a43,#2c5364);
+  overflow-y: auto;
+  padding: 20px 0;
 }
 
 #startScreen h1 {
@@ -36,29 +38,73 @@ body {
 }
 
 #startScreen h2 {
-  font-size: 36px;
+  font-size: 32px;
   color: #00C2FF;
   margin-top: 0;
-  margin-bottom: 40px;
+  margin-bottom: 25px;
   font-weight: bold;
 }
 
-/* 特大號進入按鈕 */
-.start-btn {
-  padding: 25px 70px;
-  border: 4px solid #fff;
-  border-radius: 60px;
-  font-size: 36px;
+/* 區塊標題 */
+.section-title {
+  font-size: 28px;
+  color: #FFF;
+  margin: 15px 0 10px 0;
+  font-weight: bold;
+  text-shadow: 0 0 5px rgba(255,255,255,0.5);
+}
+
+/* 選擇按鈕組 */
+.option-group {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.opt-btn {
+  padding: 15px 35px;
+  border: 3px solid rgba(255,255,255,0.4);
+  border-radius: 40px;
+  font-size: 24px;
   cursor: pointer;
-  background: #00d4ff;
+  background: rgba(255,255,255,0.1);
+  color: white;
+  font-weight: bold;
+  transition: all 0.2s;
+  min-width: 160px;
+}
+.opt-btn:hover {
+  background: rgba(255,255,255,0.25);
+  transform: scale(1.03);
+}
+/* 被選中的按鈕樣式 */
+.opt-btn.active {
+  background: #00d4ff !important;
+  color: black !important;
+  border-color: #fff !important;
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.6);
+}
+
+/* 特大號開始遊戲按鈕 */
+.start-game-btn {
+  padding: 22px 60px;
+  border: 4px solid #fff;
+  border-radius: 50px;
+  font-size: 32px;
+  cursor: pointer;
+  background: #00FF88;
   color: black;
   font-weight: bold;
-  box-shadow: 0 0 30px rgba(0, 212, 255, 0.6);
+  box-shadow: 0 0 25px rgba(0, 255, 136, 0.5);
   transition: all 0.2s;
+  width: 400px;
+  text-align: center;
+  margin-top: 15px;
 }
-.start-btn:hover {
+.start-game-btn:hover {
   transform: scale(1.05);
-  box-shadow: 0 0 40px rgba(0, 212, 255, 0.9);
+  box-shadow: 0 0 40px rgba(0, 255, 136, 0.8);
 }
 
 /* ===== 遊戲畫面 ===== */
@@ -78,7 +124,7 @@ canvas {
   object-fit: cover;
 }
 
-/* 右上方特大繁體中文 UI 面板 */
+/* 右上方特大 UI 面板 */
 #topUI {
   position:absolute;
   top:20px;
@@ -86,27 +132,24 @@ canvas {
   z-index: 5;
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 12px;
 }
 
 .panel {
   padding: 15px 40px;
   border-radius: 25px;
   background: rgba(0,0,0,0.85);
-  font-size: 36px;
+  font-size: 34px;
   font-weight: bold;
   border: 3px solid rgba(255,255,255,0.4);
   text-align: right;
-  min-width: 220px;
+  min-width: 240px;
 }
 
-#timerPanel {
-  color: #FF3366;
-  border-color: #FF3366;
-  text-shadow: 0 0 10px #FF3366;
-}
+#speedPanel { color: #00d4ff; border-color: #00d4ff; text-shadow: 0 0 10px #00d4ff; }
+#timerPanel { color: #FF3366; border-color: #FF3366; text-shadow: 0 0 10px #FF3366; }
 
-/* 頂部大 WARM UP 標題 */
+/* 頂部大標題 */
 #stageTitle {
   position: absolute;
   top: 25px;
@@ -120,7 +163,7 @@ canvas {
   letter-spacing: 3px;
 }
 
-/* 動作提示字：特大、清晰、強調慢慢做 */
+/* 動作提示字 */
 #instruction-box {
   position: absolute;
   top: 110px;
@@ -135,19 +178,19 @@ canvas {
   background: rgba(0, 0, 0, 0.85);
   border-radius: 40px;
   border: 4px solid #00d4ff;
-  font-size: 52px;
+  font-size: 50px;
   color: #fff;
   font-weight: 900;
   text-shadow: 0 0 15px #00d4ff;
   letter-spacing: 2px;
 }
 
-.slow-text {
+.speed-tip {
   color: #FFD600;
   text-shadow: 0 0 10px #FFD600;
 }
 
-/* 保證 100% 顯現的特大純色塊卡通公仔組（女孩+男孩） */
+/* 100% 顯現的特大純色塊公仔組（女孩+男孩） */
 #coachContainer {
   position: absolute;
   bottom: 30px;
@@ -160,11 +203,11 @@ canvas {
 }
 
 .avatar-coach {
-  width: 340px;  /* 特大尺寸 */
+  width: 340px;
   height: 400px;
 }
 
-/* 人體骨架點樣式：預設為科技藍色 */
+/* 人體關節藍點 */
 .joint-dot {
   fill: #00E5FF;
   stroke: #fff;
@@ -172,14 +215,14 @@ canvas {
   transition: fill 0.2s, r 0.2s;
 }
 
-/* 當確認做到時，藍點變綠點並放大發光 */
+/* 確認做到時，藍點變大、變綠、發光 */
 .joint-success {
   fill: #00FF88 !important;
-  r: 5px !important;
-  filter: drop-shadow(0 0 8px #00FF88);
+  r: 5.5px !important;
+  filter: drop-shadow(0 0 10px #00FF88);
 }
 
-/* 全中文特大評級反饋（完美 / 良好） */
+/* 評級反饋 */
 #rating {
   position:absolute;
   top:45%;
@@ -209,7 +252,6 @@ canvas {
   pointer-events: none;
 }
 
-/* 噴發粒子 */
 .particle {
   position:absolute;
   width:12px;
@@ -222,15 +264,9 @@ canvas {
 }
 @keyframes particleMove { to { transform: translate(var(--mx), var(--my)); opacity:0; } }
 
-/* 結算畫面 */
-#endScreen {
-  display:none;
-  background:#111;
-}
-#finalScore {
-  font-size: 65px;
-  margin-bottom: 40px;
-}
+.freeze-effect { filter: hue-rotate(180deg) brightness(1.3) contrast(1.2); }
+#endScreen { display:none; background:#111; }
+#finalScore { font-size: 65px; margin-bottom: 40px; }
 </style>
 </head>
 
@@ -238,24 +274,39 @@ canvas {
 
 <div id="startScreen" class="screen">
   <h1>FitAR 動活+</h1>
-  <h2>慢速健康熱身模式 🎵</h2>
-  <button class="start-btn" onclick="startGame()">開始慢慢做運動</button>
+  <h2>請設定您的運動計畫 🎵</h2>
+  
+  <div class="section-title">第一步：選擇動作速度</div>
+  <div class="option-group">
+    <button class="opt-btn active" id="spd-slow" onclick="selectSpeed('slow')">慢速</button>
+    <button class="opt-btn" id="spd-medium" onclick="selectSpeed('medium')">中速</button>
+    <button class="opt-btn" id="spd-normal" onclick="selectSpeed('normal')">正常</button>
+  </div>
+
+  <div class="section-title">第二步：選擇運動時間</div>
+  <div class="option-group">
+    <button class="opt-btn" id="time-30" onclick="selectTime(30)">30 秒</button>
+    <button class="opt-btn active" id="time-60" onclick="selectTime(60)">60 秒</button>
+    <button class="opt-btn" id="time-120" onclick="selectTime(120)">120 秒</button>
+  </div>
+
+  <button class="start-game-btn" onclick="startGame()">開始運動挑戰 ➔</button>
 </div>
 
 <div id="gameScreen">
-  <div id="stageTitle">熱身運動 WARM UP</div>
+  <div id="stageTitle">全身體能挑戰</div>
 
   <div id="topUI">
+    <div id="speedPanel" class="panel">速度：慢速</div>
     <div id="score" class="panel">目前得分: 0</div>
     <div id="timerPanel" class="panel">剩餘時間: 60</div>
   </div>
 
   <div id="instruction-box">
-    <div id="instruction"><span class="slow-text">慢慢做：</span>準備中...</div>
+    <div id="instruction"><span id="prefix-text" class="speed-tip">慢慢做：</span>準備中...</div>
   </div>
 
   <div id="coachContainer">
-    
     <svg class="avatar-coach" id="girlCoach" viewBox="0 0 100 120">
       <path d="M25,25 C10,20 5,45 20,50 C15,35 20,28 25,25 Z" fill="#4A2711" />
       <path id="girlLeftArm" d="M32,55 C20,35 22,20 28,10 C32,20 30,40 35,55 Z" fill="#FFD1A9" />
@@ -272,7 +323,11 @@ canvas {
       <path d="M39,110 H48 V115 H39 Z" fill="#00E5FF" />
       <path d="M52,110 H61 V115 H52 Z" fill="#00E5FF" />
       
-      <circle id="g_lh" class="joint-dot" cx="28" cy="10" r="3.5" />  <circle id="g_rh" class="joint-dot" cx="72" cy="10" r="3.5" />  <circle id="g_lk" class="joint-dot" cx="44" cy="104" r="3.5" /> <circle id="g_rk" class="joint-dot" cx="56" cy="104" r="3.5" /> </svg>
+      <circle id="g_lh" class="joint-dot" cx="28" cy="10" r="3.5" />
+      <circle id="g_rh" class="joint-dot" cx="72" cy="10" r="3.5" />
+      <circle id="g_lk" class="joint-dot" cx="44" cy="104" r="3.5" />
+      <circle id="g_rk" class="joint-dot" cx="56" cy="104" r="3.5" />
+    </svg>
 
     <svg class="avatar-coach" id="boyCoach" viewBox="0 0 100 120">
       <path id="boyLeftArm" d="M32,55 C20,35 22,20 28,10 C32,20 30,40 35,55 Z" fill="#FFD1A9" />
@@ -289,7 +344,11 @@ canvas {
       <path d="M39,110 H48 V115 H39 Z" fill="#FF6D00" />
       <path d="M52,110 H61 V115 H52 Z" fill="#FF6D00" />
       
-      <circle id="b_lh" class="joint-dot" cx="28" cy="10" r="3.5" />  <circle id="b_rh" class="joint-dot" cx="72" cy="10" r="3.5" />  <circle id="b_lk" class="joint-dot" cx="44" cy="104" r="3.5" /> <circle id="b_rk" class="joint-dot" cx="56" cy="104" r="3.5" /> </svg>
+      <circle id="b_lh" class="joint-dot" cx="28" cy="10" r="3.5" />
+      <circle id="b_rh" class="joint-dot" cx="72" cy="10" r="3.5" />
+      <circle id="b_lk" class="joint-dot" cx="44" cy="104" r="3.5" />
+      <circle id="b_rk" class="joint-dot" cx="56" cy="104" r="3.5" />
+    </svg>
   </div>
 
   <div id="rating"></div>
@@ -301,21 +360,24 @@ canvas {
 
 <div id="endScreen" class="screen">
   <h1 id="finalScore"></h1>
-  <button class="start-btn" onclick="location.reload()">再玩一次</button>
+  <button class="start-game-btn" onclick="location.reload()">再玩一次</button>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 
 <script>
-let score = 0, timeLeft = 60; // 延長至 60 秒完整體驗
+let score = 0, timeLeft = 60, speedMode = 'slow', actionDuration = 6000;
 let last = null, beatWindow = 0, beatChecked = false;
-let currentAction = "reach";
-let currentActionIndex = 0;
+let currentAction = "reach", currentActionIndex = 0;
 let beatInterval, actionInterval, timerInterval;
 
-// 👉 完整 8 大中文慢速熱身動作清單
-const actionsList = ["reach", "run", "knees", "star", "highlow", "jacks", "clap", "freeze"];
+// 12 大熱身/健身核心動作清單
+const actionsList = [
+  "reach", "run", "knees", "star", 
+  "highlow", "rolls", "jacks", "clap", 
+  "sidebend", "lunge", "twist", "freeze"
+];
 
 const instruction = document.getElementById("instruction");
 const scoreText = document.getElementById("score");
@@ -333,16 +395,30 @@ window.addEventListener('resize', () => {
   canvas.height = window.innerHeight;
 });
 
+// 處理速度選擇 UI 切換（無顯示括號提示字）
+function selectSpeed(mode) {
+  speedMode = mode;
+  document.querySelectorAll('[id^="spd-"]').forEach(btn => btn.classList.remove('active'));
+  document.getElementById('spd-' + mode).classList.add('active');
+}
+
+// 處理時間選擇 UI 切換（無顯示括號提示字）
+function selectTime(seconds) {
+  timeLeft = seconds;
+  document.querySelectorAll('[id^="time-"]').forEach(btn => btn.classList.remove('active'));
+  document.getElementById('time-' + seconds).classList.add('active');
+}
+
 function beat(){
   if (!beatChecked && beatWindow > 0) {
-    showRating("加油！再試試看");
+    showRating("加油！再試試");
   }
   beatWindow = Date.now();
   beatChecked = false;
-  resetJointDots(); // 每拍重置公仔藍點顏色
+  resetJointDots(); 
 }
 
-// 變更並刷新 8 大動作 UI 與公仔姿勢
+// 變更 12 大核心動作與公仔肢體姿勢
 function changeActionTo(index) {
   currentActionIndex = index;
   currentAction = actionsList[index];
@@ -353,59 +429,77 @@ function changeActionTo(index) {
   const gRight = document.getElementById("girlRightArm");
   const bLeft = document.getElementById("boyLeftArm");
   const bRight = document.getElementById("boyRightArm");
-  
-  // 藍點的 SVG 物件
   const dots = ["g_lh", "g_rh", "b_lh", "b_rh"];
 
-  // 1. REACH UP HIGH (雙手高舉)
+  // 1. REACH (雙手高舉)
   if(currentAction === "reach") {
-    instruction.innerHTML = `<span class="slow-text">慢慢做：</span>雙手高舉過頭 🙌`;
-    setArmsUp(gLeft, gRight, bLeft, bRight, dots, 10);
+    setUI("雙手高舉過頭 🙌"); setArmsUp(gLeft, gRight, bLeft, bRight, dots, 10);
   }
-  // 2. RUN IN PLACE (原地踏步)
-  if(currentAction === "run") {
-    instruction.innerHTML = `<span class="slow-text">慢慢做：</span>原地輕鬆踏步 🏃`;
-    setArmsDown(gLeft, gRight, bLeft, bRight, dots);
+  // 2. RUN (原地輕鬆步)
+  else if(currentAction === "run") {
+    setUI("原地輕鬆踏步 🏃"); setArmsDown(gLeft, gRight, bLeft, bRight, dots);
   }
-  // 3. HIGH KNEES (慢速高抬腿)
-  if(currentAction === "knees") {
-    instruction.innerHTML = `<span class="slow-text">慢慢做：</span>慢速高抬腿 ⚡`;
-    setArmsDown(gLeft, gRight, bLeft, bRight, dots);
+  // 3. KNEES (慢速高抬腿)
+  else if(currentAction === "knees") {
+    setUI("慢速交替高抬腿 ⚡"); setArmsDown(gLeft, gRight, bLeft, bRight, dots);
   }
-  // 4. STAR JUMPS (星星大張開)
-  if(currentAction === "star") {
-    instruction.innerHTML = `<span class="slow-text">慢慢做：</span>雙手雙腳張開 ⭐`;
-    setArmsOut(gLeft, gRight, bLeft, bRight, dots);
+  // 4. STAR (星星大張開)
+  else if(currentAction === "star") {
+    setUI("雙手雙腳左右大張開 ⭐"); setArmsOut(gLeft, gRight, bLeft, bRight, dots);
   }
-  // 5. HIGH AND LOW (高低大伸展)
-  if(currentAction === "highlow") {
-    instruction.innerHTML = `<span class="slow-text">慢慢做：</span>向上摸天、向下蹲 ↕`;
-    setArmsUp(gLeft, gRight, bLeft, bRight, dots, 10);
+  // 5. HIGHLOW (高低大伸展)
+  else if(currentAction === "highlow") {
+    setUI("向上摸天、向下微蹲 ↕"); setArmsUp(gLeft, gRight, bLeft, bRight, dots, 10);
   }
-  // 6. JUMPING JACKS (慢速開合跳)
-  if(currentAction === "jacks") {
-    instruction.innerHTML = `<span class="slow-text">慢慢做：</span>慢速開合跳 🕺`;
-    setArmsOut(gLeft, gRight, bLeft, bRight, dots);
+  // 6. ROLLS (放鬆轉動肩膀)
+  else if(currentAction === "rolls") {
+    setUI("前後緩慢轉動雙肩 🔄"); setArmsDown(gLeft, gRight, bLeft, bRight, dots);
   }
-  // 7. WAVE AND CLAP (胸前雙手擊掌)
-  if(currentAction === "clap") {
-    instruction.innerHTML = `<span class="slow-text">慢慢做：</span>雙手胸前擊掌 👏`;
-    // 手臂向中央靠攏
+  // 7. JACKS (開合跳躍)
+  else if(currentAction === "jacks") {
+    setUI("雙腳張開、雙手平舉 🕺"); setArmsOut(gLeft, gRight, bLeft, bRight, dots);
+  }
+  // 8. CLAP (胸前擊掌)
+  else if(currentAction === "clap") {
+    setUI("雙手向胸前靠攏擊掌 👏");
     gLeft.setAttribute("d", "M35,55 C35,45 42,40 45,45 C42,55 38,55 35,55 Z");
     gRight.setAttribute("d", "M65,55 C65,45 58,40 55,45 C58,55 62,55 65,55 Z");
     bLeft.setAttribute("d", "M35,55 C35,45 42,40 45,45 C42,55 38,55 35,55 Z");
     bRight.setAttribute("d", "M65,55 C65,45 58,40 55,45 C58,55 62,55 65,55 Z");
-    updateDotPos("g_lh", 45, 45); updateDotPos("g_rh", 55, 45);
-    updateDotPos("b_lh", 45, 45); updateDotPos("b_rh", 55, 45);
+    dsUpdate(45, 55);
   }
-  // 8. SHAKE AND FREEZE (定格不動)
-  if(currentAction === "freeze") {
-    instruction.innerHTML = `<span class="slow-text">慢慢做：</span>全身定格不要動 ❄`;
-    setArmsUp(gLeft, gRight, bLeft, bRight, dots, 20);
+  // 9. SIDEBEND (左右側彎)
+  else if(currentAction === "sidebend") {
+    setUI("身體往左斜側彎 🧘");
+    gLeft.setAttribute("d", "M35,55 C20,45 15,35 20,25 C25,35 30,45 35,55 Z");
+    gRight.setAttribute("d", "M68,55 C80,35 78,20 72,10 C68,20 70,40 65,55 Z");
+    bLeft.setAttribute("d", "M35,55 C20,45 15,35 20,25 C25,35 30,45 35,55 Z");
+    brUpdateUp(10);
+    updateDotPos("g_lh", 20, 25); updateDotPos("g_rh", 72, 10);
+    updateDotPos("b_lh", 20, 25); updateDotPos("b_rh", 72, 10);
+  }
+  // 10. LUNGE (前後弓步)
+  else if(currentAction === "lunge") {
+    setUI("雙腳前後大跨弓步 🦵"); setArmsDown(gLeft, gRight, bLeft, bRight, dots);
+  }
+  // 11. TWIST (水平轉體)
+  else if(currentAction === "twist") {
+    setUI("雙手平舉，左右轉腰 🔄"); setArmsOut(gLeft, gRight, bLeft, bRight, dots);
+  }
+  // 12. FREEZE (定格不動)
+  else if(currentAction === "freeze") {
+    setUI("全身定格，保持不動 ❄"); setArmsUp(gLeft, gRight, bLeft, bRight, dots, 20);
   }
 }
 
-// 輔助函式：動態調整 SVG 手臂與藍點位置
+// 輔助函式：UI 文字更新（遊戲內的頂部與前方提示字）
+function setUI(text) {
+  const prefix = { 'slow': '慢慢做：', 'medium': '跟著做：', 'normal': '快節奏：' }[speedMode];
+  document.getElementById("prefix-text").innerText = prefix;
+  instruction.innerHTML = `<span id="prefix-text" class="speed-tip">${prefix}</span>${text}`;
+}
+
+// 輔助函式：公仔姿勢調整細節
 function setArmsUp(gl, gr, bl, br, ds, y) {
   gl.setAttribute("d", `M32,55 C20,35 22,20 28,${y} C32,20 30,40 35,55 Z`);
   gr.setAttribute("d", `M68,55 C80,35 78,20 72,${y} C68,20 70,40 65,55 Z`);
@@ -427,22 +521,28 @@ function setArmsOut(gl, gr, bl, br, ds) {
   br.setAttribute("d", "M65,55 C85,50 90,45 95,45 C90,55 80,58 65,55 Z");
   ds.forEach((id, i) => updateDotPos(id, i%2===0 ? 5 : 95, 45));
 }
+function dsUpdate(x1, x2) {
+  updateDotPos("g_lh", x1, 45); updateDotPos("g_rh", x2, 45);
+  updateDotPos("b_lh", x1, 45); updateDotPos("b_rh", x2, 45);
+}
+function brUpdateUp(y) {
+  document.getElementById("boyRightArm").setAttribute("d", `M68,55 C80,35 78,20 72,${y} C68,20 70,40 65,55 Z`);
+}
 function updateDotPos(id, x, y) {
   const el = document.getElementById(id);
-  el.setAttribute("cx", x); el.setAttribute("cy", y);
+  if(el) { el.setAttribute("cx", x); el.setAttribute("cy", y); }
 }
 
-// 重置所有人體藍點
 function resetJointDots() {
   document.querySelectorAll('.joint-dot').forEach(dot => dot.classList.remove('joint-success'));
 }
 
-// 👉 確認做到！點亮人體綠點提示玩家
+// 做到動作時，連動點亮公仔藍點變綠點
 function lightUpJoints() {
   let targets = [];
-  if(currentAction === "reach" || currentAction === "highlow" || currentAction === "freeze") targets = ["g_lh", "g_rh", "b_lh", "b_rh"];
-  if(currentAction === "run" || currentAction === "knees") targets = ["g_lk", "g_rk", "b_lk", "b_rk"];
-  if(currentAction === "star" || currentAction === "jacks" || currentAction === "clap") targets = ["g_lh", "g_rh", "b_lh", "b_rh"];
+  if(["reach", "highlow", "sidebend", "freeze"].includes(currentAction)) targets = ["g_lh", "g_rh", "b_lh", "b_rh"];
+  if(["run", "knees", "lunge"].includes(currentAction)) targets = ["g_lk", "g_rk", "b_lk", "b_rk"];
+  if(["star", "jacks", "clap", "rolls", "twist"].includes(currentAction)) targets = ["g_lh", "g_rh", "b_lh", "b_rh"];
   
   targets.forEach(id => {
     const el = document.getElementById(id);
@@ -455,37 +555,34 @@ function newAction(){
   changeActionTo(nextIndex);
 }
 
-// ===== 核心 8 大動作 AI 骨架演算法 =====
+// ===== 核心 12 大動作 AI 骨架判定演算法 =====
 function checkPose(lm) {
   switch(currentAction) {
-    case "reach": 
-      return lm[15].y < lm[0].y && lm[16].y < lm[0].y;
-    case "run": 
-      return Math.abs(lm[25].y - lm[26].y) > 0.04;
-    case "knees": 
-      return lm[25].y < lm[23].y || lm[26].y < lm[24].y;
-    case "star": 
-      return (lm[15].y < lm[0].y && lm[16].y < lm[0].y) && (Math.abs(lm[27].x - lm[28].x) > 0.28);
-    case "highlow": 
-      return (lm[15].y < lm[11].y) || (lm[0].y > 0.58);
-    case "jacks": 
-      return Math.abs(lm[27].x - lm[28].x) > 0.25;
-    case "clap": 
-      return Math.abs(lm[15].x - lm[16].x) < 0.12;
+    case "reach": return lm[15].y < lm[0].y && lm[16].y < lm[0].y;
+    case "run": return Math.abs(lm[25].y - lm[26].y) > 0.04;
+    case "knees": return lm[25].y < lm[23].y || lm[26].y < lm[24].y;
+    case "star": return (lm[15].y < lm[0].y && lm[16].y < lm[0].y) && (Math.abs(lm[27].x - lm[28].x) > 0.28);
+    case "highlow": return (lm[15].y < lm[11].y) || (lm[0].y > 0.58);
+    case "rolls": if(!last) return false; return Math.abs(lm[11].y - last[11].y) > 0.015;
+    case "jacks": return Math.abs(lm[27].x - lm[28].x) > 0.25;
+    case "clap": return Math.abs(lm[15].x - lm[16].x) < 0.12;
+    case "sidebend": return lm[15].y < lm[11].y && lm[16].x < lm[12].x;
+    case "lunge": return Math.abs(lm[27].x - lm[28].x) > 0.35;
+    case "twist": if(!last) return false; return Math.abs(lm[11].x - last[11].x) > 0.02;
     case "freeze": 
       if(!last) return true;
       let m = 0;
       lm.forEach((p, i) => m += Math.abs(p.x - last[i].x) + Math.abs(p.y - last[i].y));
       return m < 0.15;
-    default:
-      return false;
+    default: return false;
   }
 }
 
 function judgeTiming(){
   const diff = Date.now() - beatWindow;
-  if (diff <= 600) return "完美";  // 慢速判定：半秒內都算完美
-  if (diff <= 1500) return "良好";
+  let maxPerf = (speedMode === 'slow') ? 600 : (speedMode === 'medium' ? 450 : 300);
+  if (diff <= maxPerf) return "完美";
+  if (diff <= maxPerf * 2) return "良好";
   return "再接再厲";
 }
 
@@ -508,8 +605,7 @@ function scorePopUp(points){
 function particles(){
   const gameScreen = document.getElementById("gameScreen");
   for(let i=0; i<15; i++){
-    const p = document.createElement("div");
-    p.className = "particle";
+    const p = document.createElement("div"); p.className = "particle";
     p.style.left = (window.innerWidth / 2) + "px"; p.style.top = (window.innerHeight / 2) + "px";
     const angle = Math.random() * Math.PI * 2; const distance = 40 + Math.random() * 120;
     p.style.setProperty('--mx', `${Math.cos(angle) * distance}px`);
@@ -534,13 +630,9 @@ pose.onResults(r => {
     const lm = r.poseLandmarks;
     let actionOK = checkPose(lm);
 
-    if(currentAction === "freeze"){
-      canvas.classList.add("freeze-effect");
-    } else {
-      canvas.classList.remove("freeze-effect");
-    }
+    if(currentAction === "freeze") canvas.classList.add("freeze-effect");
+    else canvas.classList.remove("freeze-effect");
 
-    // 👉 當偵測成功做到動作
     if(actionOK && !beatChecked){
       const result = judgeTiming();
       if(result !== "再接再厲") {
@@ -549,7 +641,7 @@ pose.onResults(r => {
         scoreText.innerText = "目前得分: " + score;
         beatChecked = true; 
         
-        lightUpJoints(); // 💡 動作確認做到：點亮公仔綠燈！
+        lightUpJoints(); 
         showRating(result);
         scorePopUp(earnedPoints);
         particles();
@@ -560,6 +652,21 @@ pose.onResults(r => {
 });
 
 function startGame(){
+  // 設定不同版本的輪替速度與顯示文字（無顯示括號提示）
+  if (speedMode === 'slow') {
+    actionDuration = 6000;
+    document.getElementById("speedPanel").innerText = "速度：慢速";
+  } else if (speedMode === 'medium') {
+    actionDuration = 4000;
+    document.getElementById("speedPanel").innerText = "速度：中速";
+  } else if (speedMode === 'normal') {
+    actionDuration = 2500;
+    document.getElementById("speedPanel").innerText = "速度：正常速";
+  }
+
+  // 顯示選好的初始時間
+  document.getElementById("timerPanel").innerText = "剩餘時間: " + timeLeft;
+
   document.getElementById("startScreen").style.display = "none";
   document.getElementById("gameScreen").style.display = "block";
 
@@ -574,15 +681,15 @@ function startGame(){
     }
   }, 1000);
 
-  changeActionTo(0); // 載入第一個動作
+  changeActionTo(0); 
   beatInterval = setInterval(beat, 1500); 
-  actionInterval = setInterval(newAction, 6000); // 👉 每 6 秒才換一個動作，慢慢來
+  actionInterval = setInterval(newAction, actionDuration); 
 }
 
 function endGame(){
   document.getElementById("gameScreen").style.display = "none";
   document.getElementById("endScreen").style.display = "flex";
-  document.getElementById("finalScore").innerText = "熱身運動完成！最終得分：" + score;
+  document.getElementById("finalScore").innerText = "運動挑戰完成！最終得分：" + score;
   if(video.srcObject) video.srcObject.getTracks().forEach(track => track.stop());
 }
 </script>
