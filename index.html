@@ -222,7 +222,7 @@ canvas {
   filter: drop-shadow(0 0 10px #00FF88);
 }
 
-/* 音樂節奏縮放效果圈圈（音遊感） */
+/* 音樂節奏縮放效果圈圈 */
 #musicPulseRing {
   position: absolute;
   top: 50%;
@@ -296,7 +296,7 @@ canvas {
 
 <div id="startScreen" class="screen">
   <h1>FitAR 動活+</h1>
-  <h2>請設定您的運動計畫 🎵</h2>
+  <h2>經典廣東歌旋律同步版 🎵</h2>
   
   <div class="section-title">第一步：選擇動作速度</div>
   <div class="option-group">
@@ -346,7 +346,6 @@ canvas {
       <rect x="53" y="98" width="6" height="12" rx="3" fill="#FFD1A9" />
       <path d="M39,110 H48 V115 H39 Z" fill="#00E5FF" />
       <path d="M52,110 H61 V115 H52 Z" fill="#00E5FF" />
-      
       <circle id="g_lh" class="joint-dot" cx="28" cy="10" r="3.5" />
       <circle id="g_rh" class="joint-dot" cx="72" cy="10" r="3.5" />
       <circle id="g_lk" class="joint-dot" cx="44" cy="104" r="3.5" />
@@ -367,7 +366,6 @@ canvas {
       <rect x="53" y="98" width="6" height="12" rx="3" fill="#FFD1A9" />
       <path d="M39,110 H48 V115 H39 Z" fill="#FF6D00" />
       <path d="M52,110 H61 V115 H52 Z" fill="#FF6D00" />
-      
       <circle id="b_lh" class="joint-dot" cx="28" cy="10" r="3.5" />
       <circle id="b_rh" class="joint-dot" cx="72" cy="10" r="3.5" />
       <circle id="b_lk" class="joint-dot" cx="44" cy="104" r="3.5" />
@@ -396,10 +394,36 @@ let last = null, beatWindow = 0, beatChecked = false;
 let currentAction = "reach", currentActionIndex = 0;
 let beatInterval, actionInterval, timerInterval;
 
-// 內建 Web Audio API 音樂合成器系統
+// 💡 完整音效鏈路節點與合成器設定
 let audioCtx = null;
+let mainVolumeNode = null;
+let currentNoteIndex = 0;
 
-// 12 大核心動作清單
+// 🎼 經典廣東歌《明年今日 / 十年》副歌簡譜音高映射數據鏈路 (純程式碼音樂八音盒)
+// 數字代表簡譜音符：3 2 1 1 7 1 5, 1 1 7 1 1 2 3 2...
+const easonMelodyNotes = [
+  3, 2, 1, 1, 7, 1, 5, 0, // 明年今日 別要再失眠
+  1, 1, 7, 1, 1, 2, 3, 2, // 床褥都改變 理想敷衍
+  3, 2, 1, 1, 7, 1, 5, 5, // 臨別亦要 捉緊禮貌
+  6, 1, 2, 3, 2, 1, 1, 0  // 畢竟分開免客套
+];
+
+// 音符轉換為對應頻率的音高鏈路處理器
+const noteToFreq = {
+  0: 0,
+  5: 196.00, 6: 220.00, 7: 246.94,
+  1: 261.63, 2: 293.66, 3: 329.63, 4: 349.23,
+  55: 392.00, 66: 440.00, 77: 493.88
+};
+// 簡譜簡化頻率映射數據
+const melodyFreqs = easonMelodyNotes.map(n => {
+  if(n === 5 && easonMelodyNotes.indexOf(n) > 5) return noteToFreq[5]; 
+  if(n === 5) return 392.00; // 高音5
+  if(n === 6) return 440.00; // 高音6
+  if(n === 7) return 246.94; // 低音7
+  return noteToFreq[n];
+});
+
 const actionsList = [
   "reach", "run", "knees", "star", 
   "highlow", "rolls", "jacks", "clap", 
@@ -434,49 +458,72 @@ function selectTime(seconds) {
   document.getElementById('time-' + seconds).classList.add('active');
 }
 
-// 核心音效與音樂拍點自主合成引擎
-function playBeatSound() {
-  if (!audioCtx) return;
+// 🎼 Web Audio API 音效鏈路：自主合成大鼓、伴奏與 Eason 旋律
+function playMusicTick() {
+  if (!audioCtx || !mainVolumeNode) return;
   
-  // 1. 合成重低音大鼓 (Bass Drum)
-  let osc = audioCtx.createOscillator();
-  let gain = audioCtx.createGain();
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
-  
-  osc.frequency.setValueAtTime(120, audioCtx.currentTime);
-  osc.frequency.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-  
-  gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-  gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-  
-  osc.start();
-  osc.stop(audioCtx.currentTime + 0.3);
+  let now = audioCtx.currentTime;
 
-  // 2. 合成節奏和弦電子樂 (Synth Chord Progression)
-  let notes = [261.63, 329.63, 392.00]; // 預設 C Major 和弦
-  if (currentActionIndex % 3 === 1) notes = [293.66, 349.23, 440.00]; // D Minor
-  if (currentActionIndex % 3 === 2) notes = [349.23, 440.00, 523.25]; // F Major
-  
-  notes.forEach(freq => {
-    let synOsc = audioCtx.createOscillator();
-    let synGain = audioCtx.createGain();
-    synOsc.type = 'triangle';
-    synOsc.connect(synGain);
-    synGain.connect(audioCtx.destination);
+  // 1. 低音鏈路：動感重低音大鼓 (Bass Kick) - 負責咬定核心拍點
+  let kickOsc = audioCtx.createOscillator();
+  let kickGain = audioCtx.createGain();
+  kickOsc.connect(kickGain);
+  kickGain.connect(mainVolumeNode);
+  kickOsc.frequency.setValueAtTime(150, now);
+  kickOsc.frequency.exponentialRampToValueAtTime(0.01, now + 0.25);
+  kickGain.gain.setValueAtTime(0.6, now);
+  kickGain.gain.linearRampToValueAtTime(0.001, now + 0.25);
+  kickOsc.start(now);
+  kickOsc.stop(now + 0.25);
+
+  // 2. 旋律鏈路：八音盒純鋼琴音色主旋律 (廣東歌《明年今日》)
+  let currentFreq = melodyFreqs[currentNoteIndex];
+  if (currentFreq > 0) {
+    let melodyOsc = audioCtx.createOscillator();
+    let melodyGain = audioCtx.createGain();
     
-    synOsc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-    synGain.gain.setValueAtTime(0.12, audioCtx.currentTime);
-    synGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
+    // 使用科技感的正弦波混合三角波，模擬清脆的鋼琴八音盒音色
+    melodyOsc.type = 'sine'; 
+    melodyOsc.connect(melodyGain);
+    melodyGain.connect(mainVolumeNode);
     
-    synOsc.start();
-    synOsc.stop(audioCtx.currentTime + 0.6);
-  });
+    melodyOsc.frequency.setValueAtTime(currentFreq, now);
+    
+    // 建立音量包絡線 (Envelope) 防止爆音，產生鋼琴般的淡出尾音
+    melodyGain.gain.setValueAtTime(0.25, now);
+    melodyGain.gain.exponentialRampToValueAtTime(0.005, now + 0.45);
+    
+    melodyOsc.start(now);
+    melodyOsc.stop(now + 0.5);
+  }
+
+  // 3. 和弦伴奏鏈路：依據旋律小節動態變調，增強音樂立體感
+  if (currentNoteIndex % 4 === 0) {
+    let chordNotes = [130.81, 164.81, 196.00]; // C Major 低音和弦基礎
+    if (Math.floor(currentNoteIndex / 8) === 1) chordNotes = [146.83, 174.61, 220.00]; // Dm
+    if (Math.floor(currentNoteIndex / 8) === 3) chordNotes = [174.61, 220.00, 261.63]; // F
+    
+    chordNotes.forEach(f => {
+      let chordOsc = audioCtx.createOscillator();
+      let chordGain = audioCtx.createGain();
+      chordOsc.type = 'triangle';
+      chordOsc.frequency.setValueAtTime(f, now);
+      chordOsc.connect(chordGain);
+      chordGain.connect(mainVolumeNode);
+      chordGain.gain.setValueAtTime(0.08, now);
+      chordGain.gain.linearRampToValueAtTime(0.001, now + 0.8);
+      chordOsc.start(now);
+      chordOsc.stop(now + 0.8);
+    });
+  }
+
+  // 移至下一個音符鏈路節點
+  currentNoteIndex = (currentNoteIndex + 1) % melodyFreqs.length;
 }
 
 function beat(){
-  // 播放與音樂完全同步的實時重低音與和弦節拍
-  playBeatSound();
+  // 執行音訊與節拍鏈路播放
+  playMusicTick();
 
   // 觸發音遊擴散環視覺特效
   const ring = document.getElementById("musicPulseRing");
@@ -705,15 +752,15 @@ pose.onResults(r => {
         scorePopUp(earnedPoints);
         particles();
         
-        // 成功踩中節拍時，播放高音反饋特效聲
+        // ⚡ 擊中反饋音效鏈路節點：踩中節拍時發出高亢清脆的確認音效
         if(audioCtx) {
           let hitOsc = audioCtx.createOscillator();
           let hitGain = audioCtx.createGain();
           hitOsc.type = 'sine';
-          hitOsc.frequency.setValueAtTime(result === "完美" ? 523.25 : 392.00, audioCtx.currentTime);
+          hitOsc.frequency.setValueAtTime(result === "完美" ? 587.33 : 493.88, audioCtx.currentTime);
           hitOsc.connect(hitGain);
           hitGain.connect(audioCtx.destination);
-          hitGain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+          hitGain.gain.setValueAtTime(0.15, audioCtx.currentTime);
           hitGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
           hitOsc.start(); hitOsc.stop(audioCtx.currentTime + 0.15);
         }
@@ -724,22 +771,25 @@ pose.onResults(r => {
 });
 
 function startGame(){
-  // 初始化自主音訊合成環境 (解鎖瀏覽器音訊限制)
+  // 核心音效鏈路初始化：解鎖瀏覽器安全限制，建立核心 Master 音量增益鏈路
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  mainVolumeNode = audioCtx.createGain();
+  mainVolumeNode.gain.setValueAtTime(0.7, audioCtx.currentTime); // 調整全域音樂音量
+  mainVolumeNode.connect(audioCtx.destination);
 
-  let beatIntervalTime = 1000; // 預設 1 秒一拍 (60 BPM)
+  let beatIntervalTime = 1000; 
 
   if (speedMode === 'slow') {
     actionDuration = 6000;
-    beatIntervalTime = 1500; // 慢速：1.5秒一拍 (40 BPM)，超平緩
+    beatIntervalTime = 600; // 慢速優雅八音盒節奏 (約 100 BPM 一拍)
     document.getElementById("speedPanel").innerText = "速度：慢速";
   } else if (speedMode === 'medium') {
     actionDuration = 4000;
-    beatIntervalTime = 1000; // 中速：1.0秒一拍 (60 BPM)
+    beatIntervalTime = 420; // 中速流行樂節奏 (約 140 BPM 一拍)
     document.getElementById("speedPanel").innerText = "速度：中速";
   } else if (speedMode === 'normal') {
     actionDuration = 2500;
-    beatIntervalTime = 625;  // 正常速：0.625秒一拍 (96 BPM)，動感有勁
+    beatIntervalTime = 300; // 正常速：快節奏電子舞曲高頻鏈路 (BPM 高達 200，運動感拉滿)
     document.getElementById("speedPanel").innerText = "速度：正常速";
   }
 
