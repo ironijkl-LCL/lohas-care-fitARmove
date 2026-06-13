@@ -222,6 +222,28 @@ canvas {
   filter: drop-shadow(0 0 10px #00FF88);
 }
 
+/* 音樂節奏縮放效果圈圈（音遊感） */
+#musicPulseRing {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(1);
+  width: 250px;
+  height: 250px;
+  border: 4px solid rgba(0, 194, 255, 0.4);
+  border-radius: 50%;
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0;
+}
+.ring-pulse {
+  animation: ringExpand 0.4s ease-out;
+}
+@keyframes ringExpand {
+  0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.8; }
+  100% { transform: translate(-50%, -50%) scale(1.4); opacity: 0; }
+}
+
 /* 評級反饋 */
 #rating {
   position:absolute;
@@ -306,6 +328,8 @@ canvas {
     <div id="instruction"><span id="prefix-text" class="speed-tip">慢慢做：</span>準備中...</div>
   </div>
 
+  <div id="musicPulseRing"></div>
+
   <div id="coachContainer">
     <svg class="avatar-coach" id="girlCoach" viewBox="0 0 100 120">
       <path d="M25,25 C10,20 5,45 20,50 C15,35 20,28 25,25 Z" fill="#4A2711" />
@@ -372,7 +396,10 @@ let last = null, beatWindow = 0, beatChecked = false;
 let currentAction = "reach", currentActionIndex = 0;
 let beatInterval, actionInterval, timerInterval;
 
-// 12 大熱身/健身核心動作清單
+// 內建 Web Audio API 音樂合成器系統
+let audioCtx = null;
+
+// 12 大核心動作清單
 const actionsList = [
   "reach", "run", "knees", "star", 
   "highlow", "rolls", "jacks", "clap", 
@@ -395,21 +422,68 @@ window.addEventListener('resize', () => {
   canvas.height = window.innerHeight;
 });
 
-// 處理速度選擇 UI 切換（無顯示括號提示字）
 function selectSpeed(mode) {
   speedMode = mode;
   document.querySelectorAll('[id^="spd-"]').forEach(btn => btn.classList.remove('active'));
   document.getElementById('spd-' + mode).classList.add('active');
 }
 
-// 處理時間選擇 UI 切換（無顯示括號提示字）
 function selectTime(seconds) {
   timeLeft = seconds;
   document.querySelectorAll('[id^="time-"]').forEach(btn => btn.classList.remove('active'));
   document.getElementById('time-' + seconds).classList.add('active');
 }
 
+// 核心音效與音樂拍點自主合成引擎
+function playBeatSound() {
+  if (!audioCtx) return;
+  
+  // 1. 合成重低音大鼓 (Bass Drum)
+  let osc = audioCtx.createOscillator();
+  let gain = audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  
+  osc.frequency.setValueAtTime(120, audioCtx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+  
+  gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+  gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+  
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.3);
+
+  // 2. 合成節奏和弦電子樂 (Synth Chord Progression)
+  let notes = [261.63, 329.63, 392.00]; // 預設 C Major 和弦
+  if (currentActionIndex % 3 === 1) notes = [293.66, 349.23, 440.00]; // D Minor
+  if (currentActionIndex % 3 === 2) notes = [349.23, 440.00, 523.25]; // F Major
+  
+  notes.forEach(freq => {
+    let synOsc = audioCtx.createOscillator();
+    let synGain = audioCtx.createGain();
+    synOsc.type = 'triangle';
+    synOsc.connect(synGain);
+    synGain.connect(audioCtx.destination);
+    
+    synOsc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    synGain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+    synGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
+    
+    synOsc.start();
+    synOsc.stop(audioCtx.currentTime + 0.6);
+  });
+}
+
 function beat(){
+  // 播放與音樂完全同步的實時重低音與和弦節拍
+  playBeatSound();
+
+  // 觸發音遊擴散環視覺特效
+  const ring = document.getElementById("musicPulseRing");
+  ring.classList.remove("ring-pulse");
+  void ring.offsetWidth; 
+  ring.classList.add("ring-pulse");
+
   if (!beatChecked && beatWindow > 0) {
     showRating("加油！再試試");
   }
@@ -431,35 +505,27 @@ function changeActionTo(index) {
   const bRight = document.getElementById("boyRightArm");
   const dots = ["g_lh", "g_rh", "b_lh", "b_rh"];
 
-  // 1. REACH (雙手高舉)
   if(currentAction === "reach") {
     setUI("雙手高舉過頭 🙌"); setArmsUp(gLeft, gRight, bLeft, bRight, dots, 10);
   }
-  // 2. RUN (原地輕鬆步)
   else if(currentAction === "run") {
     setUI("原地輕鬆踏步 🏃"); setArmsDown(gLeft, gRight, bLeft, bRight, dots);
   }
-  // 3. KNEES (慢速高抬腿)
   else if(currentAction === "knees") {
     setUI("慢速交替高抬腿 ⚡"); setArmsDown(gLeft, gRight, bLeft, bRight, dots);
   }
-  // 4. STAR (星星大張開)
   else if(currentAction === "star") {
     setUI("雙手雙腳左右大張開 ⭐"); setArmsOut(gLeft, gRight, bLeft, bRight, dots);
   }
-  // 5. HIGHLOW (高低大伸展)
   else if(currentAction === "highlow") {
     setUI("向上摸天、向下微蹲 ↕"); setArmsUp(gLeft, gRight, bLeft, bRight, dots, 10);
   }
-  // 6. ROLLS (放鬆轉動肩膀)
   else if(currentAction === "rolls") {
     setUI("前後緩慢轉動雙肩 🔄"); setArmsDown(gLeft, gRight, bLeft, bRight, dots);
   }
-  // 7. JACKS (開合跳躍)
   else if(currentAction === "jacks") {
     setUI("雙腳張開、雙手平舉 🕺"); setArmsOut(gLeft, gRight, bLeft, bRight, dots);
   }
-  // 8. CLAP (胸前擊掌)
   else if(currentAction === "clap") {
     setUI("雙手向胸前靠攏擊掌 👏");
     gLeft.setAttribute("d", "M35,55 C35,45 42,40 45,45 C42,55 38,55 35,55 Z");
@@ -468,7 +534,6 @@ function changeActionTo(index) {
     bRight.setAttribute("d", "M65,55 C65,45 58,40 55,45 C58,55 62,55 65,55 Z");
     dsUpdate(45, 55);
   }
-  // 9. SIDEBEND (左右側彎)
   else if(currentAction === "sidebend") {
     setUI("身體往左斜側彎 🧘");
     gLeft.setAttribute("d", "M35,55 C20,45 15,35 20,25 C25,35 30,45 35,55 Z");
@@ -478,28 +543,23 @@ function changeActionTo(index) {
     updateDotPos("g_lh", 20, 25); updateDotPos("g_rh", 72, 10);
     updateDotPos("b_lh", 20, 25); updateDotPos("b_rh", 72, 10);
   }
-  // 10. LUNGE (前後弓步)
   else if(currentAction === "lunge") {
     setUI("雙腳前後大跨弓步 🦵"); setArmsDown(gLeft, gRight, bLeft, bRight, dots);
   }
-  // 11. TWIST (水平轉體)
   else if(currentAction === "twist") {
     setUI("雙手平舉，左右轉腰 🔄"); setArmsOut(gLeft, gRight, bLeft, bRight, dots);
   }
-  // 12. FREEZE (定格不動)
   else if(currentAction === "freeze") {
     setUI("全身定格，保持不動 ❄"); setArmsUp(gLeft, gRight, bLeft, bRight, dots, 20);
   }
 }
 
-// 輔助函式：UI 文字更新（遊戲內的頂部與前方提示字）
 function setUI(text) {
   const prefix = { 'slow': '慢慢做：', 'medium': '跟著做：', 'normal': '快節奏：' }[speedMode];
   document.getElementById("prefix-text").innerText = prefix;
   instruction.innerHTML = `<span id="prefix-text" class="speed-tip">${prefix}</span>${text}`;
 }
 
-// 輔助函式：公仔姿勢調整細節
 function setArmsUp(gl, gr, bl, br, ds, y) {
   gl.setAttribute("d", `M32,55 C20,35 22,20 28,${y} C32,20 30,40 35,55 Z`);
   gr.setAttribute("d", `M68,55 C80,35 78,20 72,${y} C68,20 70,40 65,55 Z`);
@@ -537,7 +597,6 @@ function resetJointDots() {
   document.querySelectorAll('.joint-dot').forEach(dot => dot.classList.remove('joint-success'));
 }
 
-// 做到動作時，連動點亮公仔藍點變綠點
 function lightUpJoints() {
   let targets = [];
   if(["reach", "highlow", "sidebend", "freeze"].includes(currentAction)) targets = ["g_lh", "g_rh", "b_lh", "b_rh"];
@@ -645,6 +704,19 @@ pose.onResults(r => {
         showRating(result);
         scorePopUp(earnedPoints);
         particles();
+        
+        // 成功踩中節拍時，播放高音反饋特效聲
+        if(audioCtx) {
+          let hitOsc = audioCtx.createOscillator();
+          let hitGain = audioCtx.createGain();
+          hitOsc.type = 'sine';
+          hitOsc.frequency.setValueAtTime(result === "完美" ? 523.25 : 392.00, audioCtx.currentTime);
+          hitOsc.connect(hitGain);
+          hitGain.connect(audioCtx.destination);
+          hitGain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+          hitGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+          hitOsc.start(); hitOsc.stop(audioCtx.currentTime + 0.15);
+        }
       }
     }
     last = lm;
@@ -652,21 +724,26 @@ pose.onResults(r => {
 });
 
 function startGame(){
-  // 設定不同版本的輪替速度與顯示文字（無顯示括號提示）
+  // 初始化自主音訊合成環境 (解鎖瀏覽器音訊限制)
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  let beatIntervalTime = 1000; // 預設 1 秒一拍 (60 BPM)
+
   if (speedMode === 'slow') {
     actionDuration = 6000;
+    beatIntervalTime = 1500; // 慢速：1.5秒一拍 (40 BPM)，超平緩
     document.getElementById("speedPanel").innerText = "速度：慢速";
   } else if (speedMode === 'medium') {
     actionDuration = 4000;
+    beatIntervalTime = 1000; // 中速：1.0秒一拍 (60 BPM)
     document.getElementById("speedPanel").innerText = "速度：中速";
   } else if (speedMode === 'normal') {
     actionDuration = 2500;
+    beatIntervalTime = 625;  // 正常速：0.625秒一拍 (96 BPM)，動感有勁
     document.getElementById("speedPanel").innerText = "速度：正常速";
   }
 
-  // 顯示選好的初始時間
   document.getElementById("timerPanel").innerText = "剩餘時間: " + timeLeft;
-
   document.getElementById("startScreen").style.display = "none";
   document.getElementById("gameScreen").style.display = "block";
 
@@ -682,7 +759,7 @@ function startGame(){
   }, 1000);
 
   changeActionTo(0); 
-  beatInterval = setInterval(beat, 1500); 
+  beatInterval = setInterval(beat, beatIntervalTime); 
   actionInterval = setInterval(newAction, actionDuration); 
 }
 
@@ -691,6 +768,7 @@ function endGame(){
   document.getElementById("endScreen").style.display = "flex";
   document.getElementById("finalScore").innerText = "運動挑戰完成！最終得分：" + score;
   if(video.srcObject) video.srcObject.getTracks().forEach(track => track.stop());
+  if(audioCtx) audioCtx.close();
 }
 </script>
 
