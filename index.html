@@ -2,17 +2,18 @@
 <html lang="zh-HK">
 <head>
 <meta charset="UTF-8">
-<title>FitAR 動活+ | Beat Mode 🎵</title>
+<title>FitAR 動活+ | FitAR Move+</title>
 
 <style>
 body {
   margin:0;
+  font-family:sans-serif;
   background:black;
   color:white;
-  font-family:sans-serif;
   overflow:hidden;
 }
 
+/* ===== 共用 ===== */
 .screen {
   position:absolute;
   width:100%;
@@ -30,12 +31,14 @@ body {
 }
 
 #startScreen h2 {
-  font-size: 28px;
-  color: #00C2FF;
+  font-size: 24px;
+  color: #00d4ff;
   margin-top: -10px;
   margin-bottom: 30px;
+  font-weight: 300;
 }
 
+/* 👉 放大了開始按鈕 */
 .start-btn {
   padding:20px 50px;
   border:3px solid #fff;
@@ -46,6 +49,7 @@ body {
   background:#00d4ff;
   color:black;
   font-weight: bold;
+  text-transform: uppercase;
   box-shadow: 0 0 20px rgba(0, 212, 255, 0.6);
   transition: all 0.2s;
 }
@@ -56,6 +60,7 @@ body {
 
 /* ===== 遊戲畫面 ===== */
 #gameScreen {
+  display:none;
   position: relative;
   width: 100vw;
   height: 100vh;
@@ -63,20 +68,54 @@ body {
 
 canvas {
   position:absolute;
-  width:100vw;
-  height:100vh;
+  top:0;
+  left:0;
+  width: 100vw;
+  height: 100vh;
   object-fit: cover;
 }
 
-/* 👉 頂部 UI 面板大字體 */
+/* 👉 還原圖片的左側 9 大熱身動作選單 UI */
+#actionMenu {
+  position: absolute;
+  left: 30px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.menu-item {
+  width: 240px;
+  padding: 14px 20px;
+  background: #1e73be;
+  color: white;
+  border: 2px solid #00C2FF;
+  border-radius: 15px;
+  font-size: 18px;
+  font-weight: bold;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  transition: all 0.3s;
+  pointer-events: none; /* 僅作顯示，由程式控制切換 */
+}
+
+.menu-item.active {
+  background: #00C2FF;
+  color: black;
+  transform: scale(1.08);
+  box-shadow: 0 0 20px #00C2FF;
+}
+
+/* 👉 右上方 UI 面板 */
 #topUI {
   position:absolute;
   top:20px;
-  width:100%;
-  text-align:center;
+  right:30px;
   z-index: 5;
   display: flex;
-  justify-content: center;
   gap: 15px;
 }
 
@@ -90,14 +129,28 @@ canvas {
   border: 1px solid rgba(255,255,255,0.3);
 }
 
-/* 👉 動作提示大字 + 霓虹呼吸燈 */
+/* 頂部大 WARM UP 標題 */
+#stageTitle {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 50px;
+  font-weight: 900;
+  color: #FFF;
+  text-shadow: 0 0 15px #00C2FF;
+  z-index: 5;
+  letter-spacing: 3px;
+}
+
+/* 👉 動作提示字大幅放大，加入呼吸燈霓虹效果 */
 #instruction {
   font-size: 60px;
   color: #00d4ff;
   font-weight: 900;
   text-shadow: 0 0 15px #00d4ff, 0 0 5px #fff;
   letter-spacing: 2px;
-  margin-top: 110px;
+  margin: 0;
   animation: neonPulse 1.5s infinite alternate;
 }
 
@@ -106,80 +159,85 @@ canvas {
   to { opacity: 1; transform: scale(1.03); }
 }
 
-/* 👉 節奏判定大圈圈 */
-#beatCircle {
+/* 👉 特大卡通公仔教練，置中、底部 */
+#coach {
+  position:absolute;
+  bottom: 100px; /*置於底部*/
+  left:50%;
+  transform:translateX(-50%);
+  z-index: 5;
+  display: flex; /*成對展示*/
+  justify-content: center;
+  gap: 20px; /*間距*/
+  filter: drop-shadow(0 0 20px rgba(0,0,0,0.7)); /*靚靚陰影*/
+}
+#coach img {
+  height: 400px; /*特大高度*/
+  width: auto;
+  object-fit: contain;
+}
+
+/* 👉 ✔ 和 ✖ 反饋置中特大顯示 */
+#feedback {
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform: translate(-50%, -50%);
+  width:100%;
+  text-align:center;
+  font-size:300px;
+  font-weight: bold;
+  opacity:0;
+  transition: 0.1s;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* 👉 分數浮字放大 */
+#scorePop {
   position:absolute;
   top:50%;
   left:50%;
   transform:translate(-50%,-50%);
-  width:160px;
-  height:160px;
-  border: 6px solid #00C2FF;
-  border-radius:50%;
-  opacity:0.3;
-  z-index: 4;
-  box-shadow: 0 0 20px #00C2FF;
-  transition: opacity 0.1s;
-}
-
-/* Beat 縮放動畫：節奏感更強 */
-.pulse {
-  animation: pulseAnim 0.2s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
-  opacity: 0.9 !important;
-}
-@keyframes pulseAnim {
-  from { transform: translate(-50%,-50%) scale(1.4); border-color: #fff; }
-  to { transform: translate(-50%,-50%) scale(1); border-color: #00C2FF; }
-}
-
-/* 👉 評級大字（PERFECT / GOOD / MISS）特大置中 */
-#rating {
-  position:absolute;
-  top:45%;
-  width:100%;
-  text-align:center;
-  font-size: 100px;
-  font-weight: 900;
-  letter-spacing: 4px;
-  opacity:0;
-  z-index: 5;
-  pointer-events: none;
-}
-
-/* 👉 分數浮字 */
-#scorePop {
-  position:absolute;
-  top:55%;
-  left:50%;
-  transform:translate(-50%,-50%);
-  font-size:60px;
+  font-size:80px;
   color:#FFD600;
   font-weight: 900;
   text-shadow: 0 0 15px #FFD600;
   opacity:0;
-  z-index: 6;
+  z-index: 8;
   transition: transform 0.4s ease-out, opacity 0.4s ease-out;
   pointer-events: none;
 }
 
-/* 噴發粒子 */
+/* 粒子效果 */
 .particle {
   position:absolute;
   width:10px;
   height:10px;
   background:#00FF88;
   border-radius:50%;
-  z-index: 4;
+  z-index: 6;
   pointer-events: none;
-  animation: particleMove 0.6s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+  animation: particleMove 0.8s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
 }
-@keyframes particleMove { to { transform: translate(var(--mx), var(--my)); opacity:0; } }
+@keyframes particleMove {
+  to {
+    transform: translate(var(--mx), var(--my));
+    opacity:0;
+  }
+}
+
+/* Freeze效果 */
+.freeze-effect {
+  filter: hue-rotate(180deg) brightness(1.3) contrast(1.2);
+}
 
 /* ===== 結算 ===== */
 #endScreen {
   display:none;
   background:#111;
 }
+
 #finalScore {
   font-size: 50px;
   margin-bottom: 30px;
@@ -191,23 +249,42 @@ canvas {
 
 <div id="startScreen" class="screen">
   <h1>FitAR 動活+</h1>
-  <h2>Beat Mode 🎵</h2>
-  <button class="start-btn" onclick="startGame()">開始節奏模式</button>
+  <h2>FitAR Move+</h2>
+  <button class="start-btn" onclick="startGame(0)">模仿模式</button>
+  <button class="start-btn" onclick="startGame(1)">反應模式</button>
+  <button class="start-btn" onclick="startGame(2)">Freeze模式</button>
 </div>
 
-<div id="gameScreen" style="display:none;">
-  <div id="topUI">
-    <div id="score" class="panel">Score: 0</div>
-    <div id="timer" class="panel">時間: 30</div>
+<div id="gameScreen">
+  <div id="stageTitle">WARM UP</div>
+
+  <div id="actionMenu">
+    <div class="menu-item" id="btn_run">RUN IN PLACE</div>
+    <div class="menu-item" id="btn_knees">HIGH KNEES</div>
+    <div class="menu-item" id="btn_star">STAR JUMPS</div>
+    <div class="menu-item" id="btn_highlow">HIGH AND LOW</div>
+    <div class="menu-item" id="btn_rolls">SHOULDER ROLLS</div>
+    <div class="menu-item" id="btn_reach">REACH UP HIGH</div>
+    <div class="menu-item" id="btn_jacks">JUMPING JACKS</div>
+    <div class="menu-item" id="btn_clap">WAVE AND CLAP</div>
+    <div class="menu-item" id="btn_freeze">SHAKE AND FREEZE</div>
   </div>
 
-  <div id="instruction-container" style="position: absolute; top: 20px; width: 100%; text-align: center; z-index: 5;">
+  <div id="topUI">
+    <div id="score" class="panel">Score: 0</div>
+    <div id="timer" class="panel">時間: 20</div>
+  </div>
+
+  <div id="instruction-container" style="position: absolute; top: 110px; width: 100%; text-align: center; z-index: 5;">
     <div id="instruction">準備...</div>
   </div>
 
-  <div id="beatCircle"></div>
-  <div id="rating"></div>
-  <div id="scorePop">+20</div>
+  <div id="coach">
+    <img src="https://example.com/placeholder_girl_coach.png" id="girlCoach">
+    <img src="https://example.com/placeholder_boy_coach.png" id="boyCoach">
+  </div>
+  <div id="feedback"></div>
+  <div id="scorePop">+10</div>
 
   <video id="video" style="display:none;" playsinline></video>
   <canvas id="canvas"></canvas>
@@ -215,26 +292,24 @@ canvas {
 
 <div id="endScreen" class="screen">
   <h1 id="finalScore"></h1>
-  <button class="start-btn" onclick="location.reload()">再玩一次</button>
+  <button class="start-btn" onclick="restart()">再玩一次</button>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 
 <script>
-let score = 0, timeLeft = 30;
+let mode = 0, score = 0, combo = 0, timeLeft = 20;
+const actionsList = ["run", "knees", "star", "highlow", "rolls", "reach", "jacks", "clap", "freeze"];
+let currentActionIndex = 0;
+let currentAction = "run";
 let last = null;
-let beatWindow = 0;
-let currentAction = "raise";
-let beatChecked = false; // 💡 關鍵鎖：防止每拍重複觸發多次計分
+let actionChecked = false;
+let actionInterval, timerInterval;
 
-const instruction = document.getElementById("instruction");
-const scoreText = document.getElementById("score");
-const rating = document.getElementById("rating");
-
-const video = document.getElementById("video");
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
 
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
@@ -244,89 +319,142 @@ window.addEventListener('resize', () => {
   canvas.height = window.innerHeight;
 });
 
-// ====== BEAT SYSTEM (節奏核心) ======
-function beat(){
-  const circle = document.getElementById("beatCircle");
+const instruction = document.getElementById('instruction');
+const scoreText = document.getElementById('score');
+const feedback = document.getElementById('feedback');
+
+function startGame(m){
+  mode = m;
+  document.getElementById("startScreen").style.display = "none";
+  document.getElementById("gameScreen").style.display = "block";
+  startCamera();
+  gameLoop();
   
-  // 💡 如果上一拍玩家完全沒動或沒對，在下一拍開始時強制結算 MISS
-  if (!beatChecked && beatWindow > 0) {
-    showRating("MISS");
+  if (mode === 2) {
+    changeActionTo(8); // Freeze 模式直接跳到最後一個 Freeze 動作
+  } else {
+    changeActionTo(0); // 模仿和反應模式從第一個動作開始輪替
+  }
+}
+
+// 切換核心動作、左側高亮及畫面的大字提示
+function changeActionTo(index) {
+  currentActionIndex = index;
+  currentAction = actionsList[index];
+  actionChecked = false;
+
+  // 更新左側選單 UI 激活狀態
+  document.querySelectorAll('.menu-item').forEach(btn => btn.classList.remove('active'));
+  const activeBtn = document.getElementById(`btn_${currentAction}`);
+  if(activeBtn) activeBtn.classList.add('active');
+
+  // 根據不同模式，隨機或依序給予中文提示與 Emoji 教練
+  if(mode === 2 || currentAction === "freeze") {
+    currentAction = "freeze";
+    instruction.innerText = "❄ FREEZE! 別動！";
+    return;
   }
 
-  // 重置拍點狀態
-  circle.classList.remove("pulse");
-  void circle.offsetWidth; // 強制重繪，確保動畫能重複觸發
-  circle.classList.add("pulse");
+  const chineseTips = {
+    "run": "🏃 原地跑步！摆动双臂！",
+    "knees": "⚡ 高抬腿！雙膝提至腰部！",
+    "star": "⭐ 星式跳躍！手腳打開！",
+    "highlow": "↕ 高低伸展！摸天再下蹲！",
+    "rolls": "🔄 轉動肩膀！放鬆肌肉！",
+    "reach": "🙌 雙手高舉過頭！",
+    "jacks": "🕺 開合跳！隨著節奏跳！",
+    "clap": "👏 揮手拍掌！胸前擊掌！"
+  };
 
-  beatWindow = Date.now();
-  beatChecked = false; // 每拍解鎖，允許這拍進行新的判定
+  instruction.innerText = chineseTips[currentAction];
 }
 
-// ===== 動作更新 (每 3 秒換一個動作) =====
+// 根據隨機或順序派發新動作
 function newAction(){
-  const arr = ["raise", "jump", "run"];
-  currentAction = arr[Math.floor(Math.random() * arr.length)];
+  if(mode === 2) return;
 
-  if(currentAction === "raise") instruction.innerText = "🙌 舉起雙手！";
-  if(currentAction === "jump")  instruction.innerText = "🕺 跳開合跳！";
-  if(currentAction === "run")   instruction.innerText = "🏃 抬腿跑步！";
+  if(mode === 0) {
+    // 模仿模式：依序換下一個動作
+    let nextIndex = (currentActionIndex + 1) % (actionsList.length - 1); // 排除最後一個純 Freeze
+    changeActionTo(nextIndex);
+  } else if(mode === 1) {
+    // 反應模式：隨機抽取前 8 個熱身動作
+    let randomIndex = Math.floor(Math.random() * (actionsList.length - 1));
+    changeActionTo(randomIndex);
+  }
 }
 
-// ===== 骨架算法判定 =====
-function isHandsUp(lm){ return lm[15].y < lm[0].y && lm[16].y < lm[0].y; }
-function isJump(lm){ return Math.abs(lm[27].x - lm[28].x) > 0.25; }
-function isRun(lm){ return Math.abs(lm[25].y - lm[26].y) > 0.06; }
-
-// ===== 評分精準 Timing 機制 =====
-function judgeTiming(){
-  const diff = Date.now() - beatWindow;
-
-  if (diff <= 250) return "PERFECT"; // 拍點後半拍內 (250毫秒) 算 Perfect
-  if (diff <= 600) return "GOOD";    // 600毫秒內算 Good
-  return "MISS";
+// ===== 核心演算法：9 大動作精準骨架判定 =====
+function checkPose(lm) {
+  switch(currentAction) {
+    case "run": 
+      return Math.abs(lm[25].y - lm[26].y) > 0.05;
+    case "knees": 
+      return lm[25].y < lm[23].y || lm[26].y < lm[24].y;
+    case "star": 
+      return (lm[15].y < lm[0].y && lm[16].y < lm[0].y) && (Math.abs(lm[27].x - lm[28].x) > 0.3);
+    case "highlow": 
+      return (lm[15].y < lm[11].y) || (lm[0].y > 0.6);
+    case "rolls": 
+      if(!last) return false;
+      return Math.abs(lm[11].y - last[11].y) > 0.02 || Math.abs(lm[12].y - last[12].y) > 0.02;
+    case "reach": 
+      return lm[15].y < lm[0].y && lm[16].y < lm[0].y;
+    case "jacks": 
+      return Math.abs(lm[27].x - lm[28].x) > 0.25;
+    case "clap": 
+      return Math.abs(lm[15].x - lm[16].x) < 0.1;
+    case "freeze": 
+      if(!last) return true;
+      let m = 0;
+      lm.forEach((p, i) => {
+        m += Math.abs(p.x - last[i].x) + Math.abs(p.y - last[i].y);
+      });
+      return m < 0.15;
+    default:
+      return false;
+  }
 }
 
-function showRating(text){
-  rating.innerText = text;
-  rating.style.opacity = 1;
-
-  if(text === "PERFECT") { rating.style.color = "#00FF88"; rating.style.textShadow = "0 0 20px #00FF88"; }
-  if(text === "GOOD")    { rating.style.color = "#FFD600"; rating.style.textShadow = "0 0 20px #FFD600"; }
-  if(text === "MISS")    { rating.style.color = "#FF3366"; rating.style.textShadow = "0 0 20px #FF3366"; }
-
-  setTimeout(() => { if(rating.innerText === text) rating.style.opacity = 0; }, 250);
-}
-
-function scorePopUp(points){
-  const el = document.getElementById("scorePop");
-  el.innerText = "+" + points;
-  el.style.opacity = 1;
-  el.style.transform = "translate(-50%, -150%)"; // 向上飄移
-  setTimeout(() => { el.style.opacity = 0; el.style.transform = "translate(-50%,-50%)"; }, 300);
-}
-
+// 向四周放射的圓形粒子特效
 function particles(){
   const gameScreen = document.getElementById("gameScreen");
-  for(let i=0; i<15; i++){
-    const p = document.createElement("div");
-    p.className = "particle";
-    p.style.left = (window.innerWidth / 2) + "px";
-    p.style.top = (window.innerHeight / 2) + "px";
+  for(let i=0;i<20;i++){
+    const p=document.createElement("div");
+    p.className="particle";
+    p.style.left=(window.innerWidth/2)+"px";
+    p.style.top=(window.innerHeight/2)+"px";
     const angle = Math.random() * Math.PI * 2;
-    const distance = 40 + Math.random() * 120;
+    const distance = 50 + Math.random() * 150;
     p.style.setProperty('--mx', `${Math.cos(angle) * distance}px`);
     p.style.setProperty('--my', `${Math.sin(angle) * distance}px`);
     gameScreen.appendChild(p);
-    setTimeout(() => p.remove(), 600);
+    setTimeout(()=>p.remove(),800);
   }
 }
 
-// ===== MediaPipe Pose =====
+function scorePopUp(points){
+  const el=document.getElementById("scorePop");
+  el.innerText = "+" + points;
+  el.style.opacity=1;
+  el.style.transform="translate(-50%, -150%)";
+  setTimeout(()=>{
+    el.style.opacity=0;
+    el.style.transform="translate(-50%,-50%)";
+  },400);
+}
+
+function showFeedback(ok){
+  feedback.innerText = ok ? "✔" : "✖";
+  feedback.style.color = ok ? "#00ffcc" : "#ff3366";
+  feedback.style.opacity = 1;
+  setTimeout(() => feedback.style.opacity = 0, 300);
+}
+
 const pose = new Pose({
   locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}`
 });
 
-// 優化參數，減少卡頓
 pose.setOptions({
   modelComplexity: 1,
   smoothLandmarks: true,
@@ -344,65 +472,80 @@ pose.onResults(r => {
 
   if(r.poseLandmarks){
     const lm = r.poseLandmarks;
-    let actionOK = false;
+    let ok = checkPose(lm);
 
-    if(currentAction === "raise") actionOK = isHandsUp(lm);
-    if(currentAction === "jump")  actionOK = isJump(lm);
-    if(currentAction === "run")   actionOK = isRun(lm);
+    if(currentAction === "freeze"){
+      canvas.classList.add("freeze-effect");
+    } else {
+      canvas.classList.remove("freeze-effect");
+    }
 
-    // 💡 只有動作正確、且這一拍還沒拿過分 (!beatChecked) 時才進行節奏判定
-    if(actionOK && !beatChecked){
-      const result = judgeTiming();
+    if(ok && !actionChecked){
+      combo++;
+      let currentEarn = 10 * combo;
+      score += currentEarn;
+      scoreText.innerText = "Score: " + score;
+      actionChecked = true;
+      showFeedback(true);
+      particles();
+      scorePopUp(currentEarn);
+    }
 
-      if(result !== "MISS") {
-        let earnedPoints = (result === "PERFECT") ? 20 : 10;
-        score += earnedPoints;
-        scoreText.innerText = "Score: " + score;
-        beatChecked = true; // 💡 立刻鎖定這一拍，直到下一拍重新解鎖
-        
-        showRating(result);
-        scorePopUp(earnedPoints);
-        particles();
+    if(currentAction === "freeze" && !ok && last) {
+      if(combo > 0) {
+        combo = 0;
+        showFeedback(false);
       }
     }
-    last = lm;
+
+    last = JSON.parse(JSON.stringify(lm));
   }
 });
 
-// ===== Camera & Loop =====
-function startGame(){
-  document.getElementById("startScreen").style.display = "none";
-  document.getElementById("gameScreen").style.display = "block";
-
-  const cam = new Camera(video,{
-    onFrame: async () => await pose.send({image:video}),
-    width: 640, height: 480
+function startCamera(){
+  const cam = new Camera(video, {
+    onFrame: async () => {
+      await pose.send({image: video});
+    },
+    width: 640,
+    height: 480
   });
   cam.start();
+}
 
-  // 啟動倒數計時
-  const timerInterval = setInterval(() => {
+function gameLoop(){
+  // 倒數計時器（20 秒）
+  timerInterval = setInterval(() => {
     timeLeft--;
     document.getElementById("timer").innerText = "時間: " + timeLeft;
+
     if(timeLeft <= 0){
       clearInterval(timerInterval);
-      clearInterval(beatInterval);
       clearInterval(actionInterval);
       endGame();
     }
   }, 1000);
 
-  // 啟動節奏與動作輪替
-  newAction();
-  const beatInterval = setInterval(beat, 1000); // 1秒1拍 (60 BPM)
-  const actionInterval = setInterval(newAction, 3000); // 3秒換動作
+  // 動作輪替間隔（2.5 秒快速節奏）
+  actionInterval = setInterval(() => {
+    if (mode !== 2) {
+      if(!actionChecked) {
+        combo = 0;
+        showFeedback(false);
+      }
+      newAction();
+    }
+  }, 2500);
 }
 
 function endGame(){
   document.getElementById("gameScreen").style.display = "none";
   document.getElementById("endScreen").style.display = "flex";
-  document.getElementById("finalScore").innerText = "挑戰結束！最終分數：" + score;
-  if(video.srcObject) video.srcObject.getTracks().forEach(track => track.stop());
+  document.getElementById("finalScore").innerText = "最終分數：" + score;
+}
+
+function restart(){
+  location.reload();
 }
 </script>
 
