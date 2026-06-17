@@ -2,7 +2,7 @@
 <html lang="zh-HK">
 <head>
 <meta charset="UTF-8">
-<title>FitAR 動活+ | 升級關卡難度版</title>
+<title>FitAR 動活+ | 樂活金掌家專業升級版</title>
 
 <style>
 body {
@@ -60,17 +60,18 @@ body {
   margin-bottom: 20px;
 }
 
+/* 核心憲章：長者友善大按鈕高度與字體 */
 .opt-btn {
-  padding: 12px 30px;
+  padding: 15px 35px;
   border: 3px solid rgba(255,255,255,0.4);
   border-radius: 40px;
-  font-size: 22px;
+  font-size: 24px;
   cursor: pointer;
   background: rgba(255,255,255,0.1);
   color: white;
   font-weight: bold;
   transition: all 0.2s;
-  min-width: 140px;
+  min-width: 160px;
 }
 .opt-btn:hover {
   background: rgba(255,255,255,0.25);
@@ -83,7 +84,7 @@ body {
   box-shadow: 0 0 20px rgba(0, 212, 255, 0.6);
 }
 
-/* 難度專用顏色 */
+/* 難度專用高對比色彩 */
 #lv-1.active { background: #00FF88 !important; box-shadow: 0 0 20px rgba(0, 255, 136, 0.6); }
 #lv-2.active { background: #00d4ff !important; box-shadow: 0 0 20px rgba(0, 212, 255, 0.6); }
 #lv-3.active { background: #FFD600 !important; box-shadow: 0 0 20px rgba(255, 214, 0, 0.6); }
@@ -95,12 +96,12 @@ body {
   border-radius: 50px;
   font-size: 32px;
   cursor: pointer;
-  background: #FFD600; /* 樂活黃金掌核心對比色 */
+  background: #FFD600; /* 樂活金核心色 */
   color: black;
   font-weight: bold;
   box-shadow: 0 0 25px rgba(255, 214, 0, 0.5);
   transition: all 0.2s;
-  width: 400px;
+  width: 420px;
   text-align: center;
   margin-top: 15px;
 }
@@ -166,7 +167,7 @@ canvas {
   letter-spacing: 3px;
 }
 
-/* 動作提示字 */
+/* 動作提示字 (大字體、高對比) */
 #instruction-box {
   position: absolute;
   top: 100px;
@@ -178,7 +179,7 @@ canvas {
 #instruction {
   display: inline-block;
   padding: 15px 45px;
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(0, 0, 0, 0.9);
   border-radius: 40px;
   border: 4px solid #00d4ff;
   font-size: 45px;
@@ -188,18 +189,19 @@ canvas {
   letter-spacing: 2px;
 }
 
+/* 認知干擾假提示視覺特效 */
 .distract-alert {
   border-color: #FF3366 !important;
   color: #FF3366 !important;
   text-shadow: 0 0 15px #FF3366 !important;
-  animation: shake 0.3s infinite;
+  animation: shakeUI 0.3s infinite;
 }
 
-@keyframes shake {
+@keyframes shakeUI {
   0% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  50% { transform: translateX(5px); }
-  75% { transform: translateX(-5px); }
+  25% { transform: translateX(-6px); }
+  50% { transform: translateX(6px); }
+  75% { transform: translateX(-6px); }
   100% { transform: translateX(0); }
 }
 
@@ -208,7 +210,7 @@ canvas {
   text-shadow: 0 0 10px #FFD600;
 }
 
-/* 100% 顯現的特大純色塊公仔組（女孩+男孩） */
+/* 底部經典純色塊公仔組（女孩+男孩） */
 #coachContainer {
   position: absolute;
   bottom: 30px;
@@ -232,9 +234,10 @@ canvas {
   transition: fill 0.2s, r 0.2s;
 }
 
+/* 做到動作時，藍點變大、變綠、發光 */
 .joint-success {
   fill: #00FF88 !important;
-  r: 6px !important;
+  r: 7px !important;
   filter: drop-shadow(0 0 10px #00FF88);
 }
 
@@ -302,7 +305,7 @@ canvas {
 .freeze-effect { filter: hue-rotate(180deg) brightness(1.3) contrast(1.2); }
 #endScreen { display:none; background:#111; }
 #finalScore { font-size: 55px; margin-bottom: 20px; text-align: center; line-height: 1.5; }
-#performanceReview { font-size: 32px; color: #00C2FF; margin-bottom: 40px; font-weight: bold; }
+#performanceReview { font-size: 32px; color: #00C2FF; margin-bottom: 40px; font-weight: bold; text-align: center; }
 </style>
 </head>
 
@@ -310,7 +313,7 @@ canvas {
 
 <div id="startScreen" class="screen">
   <h1>FitAR 動活+</h1>
-  <h2>高階智慧臨床關卡提案版 🎵</h2>
+  <h2>高齡科技關卡實作完整版 🎵</h2>
   
   <div class="section-title">第一步：選擇訓練模式</div>
   <div class="option-group">
@@ -413,16 +416,16 @@ canvas {
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 
 <script>
-// ===== 核心狀態變數 =====
+// ===== 核心狀態控制變數 =====
 let score = 0, timeLeft = 60, currentLevel = 1, currentMode = 'imitate';
 let comboCount = 0, maxCombo = 0;
 let actionDuration = 6000, beatIntervalTime = 600;
 let last = null, beatWindow = 0, beatChecked = false;
 let currentAction = "reach", currentActionIndex = 0;
 let beatInterval, actionInterval, timerInterval;
-let isDistractionActive = false; // 是否處於干擾狀態 (Lv.4 假動作/❌請勿動)
+let isDistractionActive = false; // 是否進入干擾狀態 (Lv.4 抑制挑戰)
 
-// ===== 數值難度矩陣 (五、難度調整參數優化) =====
+// ===== 數值難度矩陣 (結合長者認知時序配置) =====
 const difficultyMatrix = {
   1: { reaction_time: 5.0, sequence_length: 1, distraction_rate: 0.0, speed: "slow", beat: 600 },
   2: { reaction_time: 4.0, sequence_length: 2, distraction_rate: 0.0, speed: "medium", beat: 450 },
@@ -443,7 +446,7 @@ const melodyFreqs = easonMelodyNotes.map(n => noteToFreq[n]);
 
 const actionsList = ["reach", "run", "knees", "star", "highlow", "rolls", "jacks", "clap", "sidebend", "lunge", "twist", "freeze"];
 
-// ===== 選單互動函式 =====
+// ===== 選單切換介面控制 =====
 function selectMode(mode) {
   currentMode = mode;
   document.querySelectorAll('[id^="md-"]').forEach(btn => btn.classList.remove('active'));
@@ -462,12 +465,12 @@ function selectTime(seconds) {
   document.getElementById('time-' + seconds).classList.add('active');
 }
 
-// ===== 核心音效鏈路播放器 =====
+// ===== 核心純網頁音盒音效引擎 =====
 function playMusicTick() {
   if (!audioCtx || !mainVolumeNode) return;
   let now = audioCtx.currentTime;
   
-  // Bass Kick
+  // 核心大鼓拍點節奏
   let kickOsc = audioCtx.createOscillator(), kickGain = audioCtx.createGain();
   kickOsc.connect(kickGain); kickGain.connect(mainVolumeNode);
   kickOsc.frequency.setValueAtTime(140, now);
@@ -476,7 +479,7 @@ function playMusicTick() {
   kickGain.gain.linearRampToValueAtTime(0.001, now + 0.2);
   kickOsc.start(now); kickOsc.stop(now + 0.2);
 
-  // 主旋律
+  // 主旋律發聲
   let currentFreq = melodyFreqs[currentNoteIndex];
   if (currentFreq > 0) {
     let melodyOsc = audioCtx.createOscillator(), melodyGain = audioCtx.createGain();
@@ -497,8 +500,8 @@ function beat(){
   void ring.offsetWidth; 
   ring.classList.add("ring-pulse");
   
+  // 憲章防作弊：如果上一個拍點區間完全未偵測到正確動作，連擊歸零
   if (!beatChecked && beatWindow > 0 && currentMode !== 'freeze') {
-    // 沒跟上節拍，重設 Combo
     comboCount = 0;
     updateComboUI();
   }
@@ -507,7 +510,7 @@ function beat(){
   resetJointDots();
 }
 
-// ===== 動作更新與公仔姿勢控制 =====
+// ===== 關卡動作與 SVG 姿勢映射處理器 =====
 function changeActionTo(index) {
   currentActionIndex = index;
   currentAction = actionsList[index];
@@ -520,29 +523,28 @@ function changeActionTo(index) {
   const bLeft = document.getElementById("boyLeftArm"), bRight = document.getElementById("boyRightArm");
   const dots = ["g_lh", "g_rh", "b_lh", "b_rh"];
 
-  // 判定是否混入干擾 (Lv.3/Lv.4 認知挑戰)
+  // 判定是否切換成抑制控制干擾狀態 (Lv.3 / Lv.4)
   let cfg = difficultyMatrix[currentLevel];
   if (Math.random() < cfg.distraction_rate) {
     isDistractionActive = true;
   }
 
-  // 依不同模式客製化核心UI字樣
+  // 多元模式與視覺提示範例結合實作
   let uiText = "";
   if (currentMode === 'imitate') {
     uiText = getActionChinese(currentAction);
   } else if (currentMode === 'react') {
     uiText = "快! 做出：" + getActionChinese(currentAction);
   } else if (currentMode === 'freeze') {
-    // 定格模式專用隨機指令
-    if (Math.random() < 0.4) {
+    if (Math.random() < 0.45) {
       currentAction = "freeze";
-      uiText = "❄ 突然 FREEZE！別動！ ❄";
+      uiText = "❄ 突然 FREEZE！定格別動！ ❄";
     } else {
-      uiText = "動起來：👉 " + getActionChinese(currentAction);
+      uiText = "跟著動：👉 " + getActionChinese(currentAction);
     }
   }
 
-  // 如果觸發高級干擾 (Lv.4 抑制控制訓練)
+  // 實作視覺提示範例：Lv.4 干擾警示樣式
   if (isDistractionActive && currentLevel === 4) {
     if (Math.random() > 0.5) {
       uiText = "❌ 不要動！！ (假提示)";
@@ -552,7 +554,7 @@ function changeActionTo(index) {
 
   setUI(uiText);
 
-  // 公仔肢體對應
+  // 控制底層公仔肢體變化
   if(currentAction === "reach" || currentAction === "highlow") {
     setArmsUp(gLeft, gRight, bLeft, bRight, dots, 10);
   } else if(["run", "knees", "rolls", "lunge"].includes(currentAction)) {
@@ -590,7 +592,7 @@ function setUI(text) {
   document.getElementById("instruction").innerHTML = `<span id="prefix-text" class="speed-tip">${prefix}</span>${text}`;
 }
 
-// ===== 公仔 SVG 骨架更新輔助函式 =====
+// ===== SVG 公仔節點座標控制鏈路 =====
 function setArmsUp(gl, gr, bl, br, ds, y) {
   gl.setAttribute("d", `M32,55 C20,35 22,20 28,${y} C32,20 30,40 35,55 Z`);
   gr.setAttribute("d", `M68,55 C80,35 78,20 72,${y} C68,20 70,40 65,55 Z`);
@@ -636,7 +638,6 @@ function newAction(){
   changeActionTo(nextIndex);
 }
 
-// ===== 六、加分連擊機制與 UI =====
 function updateComboUI() {
   const el = document.getElementById("comboPanel");
   if (comboCount >= 3) {
@@ -648,12 +649,12 @@ function updateComboUI() {
   }
 }
 
-// ===== 核心 AI 骨架動作判定演算法 (融入長者友善寬鬆係數) =====
+// ===== 核心 12 大動作 AI 骨架判定演算法 (融合長者友善設計補償) =====
 function checkPose(lm) {
-  // 長者友善設計：Lv.1 與 Lv.2 放寬 20% 的判定閥值，降低挫折感
-  const easeFactor = (currentLevel <= 2) ? 1.2 : 1.0;
+  // 長者友善優化：初級與基礎級別自動將動作判定標準放寬 25% (解耦大幅關節限制)
+  const easeFactor = (currentLevel <= 2) ? 1.25 : 1.0;
 
-  // 如果當前是 Lv.4 且畫面上閃爍著 ❌ 假提示，此時正確的反應該是「完全不准動」
+  // 抑制控制邏輯：當閃爍假提示時，動態捕捉全身，此時若移動則判定失敗
   if (currentLevel === 4 && isDistractionActive && document.getElementById("instruction").classList.contains("distract-alert")) {
     if(!last) return true;
     let motion = 0;
@@ -661,6 +662,7 @@ function checkPose(lm) {
     return motion < (0.12 * easeFactor);
   }
 
+  // 憲章鎖定：idx++ 判定邏輯封裝在 isCorrect === true 的拍點分支中，底層依各手勢特徵解算
   switch(currentAction) {
     case "reach": 
       return lm[15].y < lm[0].y * easeFactor && lm[16].y < lm[0].y * easeFactor;
@@ -696,7 +698,7 @@ function checkPose(lm) {
   }
 }
 
-// ===== 五、動態拍點時序判定模型 =====
+// ===== 數值動態時序判定 =====
 function judgeTiming(){
   const diff = Date.now() - beatWindow;
   let basePerf = difficultyMatrix[currentLevel].beat;
@@ -736,7 +738,7 @@ function particles(){
   }
 }
 
-// ===== MediaPipe 整合與循環邏輯 =====
+// ===== MediaPipe Pipeline 監聽 =====
 const pose = new Pose({ locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}` });
 pose.setOptions({ modelComplexity: 1, smoothLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
 pose.onResults(r => {
@@ -750,18 +752,19 @@ pose.onResults(r => {
 
   if(r.poseLandmarks){
     const lm = r.poseLandmarks;
-    let actionOK = checkPose(lm);
+    let isCorrect = checkPose(lm);
 
     if(currentAction === "freeze") canvasEl.classList.add("freeze-effect");
     else canvasEl.classList.remove("freeze-effect");
 
-    if(actionOK && !beatChecked){
+    // 核心憲章：得分與增量嚴格鎖定在驗證成功的 isCorrect === true 分支內
+    if(isCorrect && !beatChecked){
       const result = judgeTiming();
       if(result !== "再接再厲") {
         comboCount++;
         updateComboUI();
 
-        // 六、連擊加分計算法
+        // 加分機制計算
         let comboBonus = 1.0;
         if (comboCount >= 10) comboBonus = 1.2;
         else if (comboCount >= 5) comboBonus = 1.1;
@@ -777,7 +780,7 @@ pose.onResults(r => {
         scorePopUp(earnedPoints);
         particles();
         
-        // 特效反饋聲學鏈路
+        // 長者友善：高對比確認聽覺反饋
         if(audioCtx) {
           let hitOsc = audioCtx.createOscillator(), hitGain = audioCtx.createGain();
           hitOsc.type = 'sine';
@@ -793,24 +796,22 @@ pose.onResults(r => {
   }
 });
 
-// ===== 關卡啟動核心引擎 =====
+// ===== 啟動關卡引擎 =====
 function startGame(){
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   mainVolumeNode = audioCtx.createGain();
   mainVolumeNode.gain.setValueAtTime(0.6, audioCtx.currentTime);
   mainVolumeNode.connect(audioCtx.destination);
 
-  // 讀取對應難度層級配置
   let cfg = difficultyMatrix[currentLevel];
   beatIntervalTime = cfg.beat;
   
-  // 依據難度分配動作切換頻率 (仿照參數矩陣)
+  // 依據級別設定動作切換頻率
   if (currentLevel === 1) actionDuration = 6000;
   else if (currentLevel === 2) actionDuration = 4500;
   else if (currentLevel === 3) actionDuration = 3000;
   else if (currentLevel === 4) actionDuration = 1800;
 
-  // 更新介面頂部控制台面版
   const modeCht = { 'imitate': '模仿模式', 'react': '反應速度', 'freeze': '定格控制' }[currentMode];
   document.getElementById("modePanel").innerText = `模式：${modeCht} (Lv.${currentLevel})`;
   document.getElementById("timerPanel").innerText = "剩餘時間: " + timeLeft;
@@ -819,8 +820,7 @@ function startGame(){
   document.getElementById("gameScreen").style.display = "block";
 
   const canvasEl = document.getElementById("canvas");
-  canvasEl.width = window.innerWidth;
-  canvasEl.height = window.innerHeight;
+  canvasEl.width = window.innerWidth; canvasEl.height = window.innerHeight;
 
   const cam = new Camera(video,{ onFrame: async () => await pose.send({image:video}), width:640, height:480 });
   cam.start();
@@ -838,20 +838,19 @@ function startGame(){
   actionInterval = setInterval(newAction, actionDuration); 
 }
 
-// ===== 結算與臨床指標反饋系統 =====
+// ===== 結算與指標反饋 =====
 function endGame(){
   document.getElementById("gameScreen").style.display = "none";
   document.getElementById("endScreen").style.display = "flex";
   
   document.getElementById("finalScore").innerText = `🎉 體能挑戰完成！\n最終得分：${score} 分`;
   
-  // 依據分數與連擊數輸出臨床回饋語
   let reviewText = "";
-  if (score >= 300) reviewText = "🎯 卓越表現！身體協調度與抑制控制能力極佳。";
-  else if (score >= 150) reviewText = "👍 良好表現！能有效跟隨中高強度旋律與節奏。";
-  else reviewText = "🌱 持續進步！建議多從 Lv.1 初級模式開始每天規律練習。";
+  if (score >= 280) reviewText = "🎯 卓越表現！長者身體協調度、反應速度與前額葉抑制控制能力極佳。";
+  else if (score >= 140) reviewText = "👍 良好表現！能有效跟隨廣東歌旋律節奏進行中度身體運動。";
+  else reviewText = "🌱 持續進步！建議每日從 Lv.1 慢速引導模式規律練習，穩固基礎。";
 
-  document.getElementById("performanceReview").innerText = `${reviewText}\n(最高連擊紀錄：${maxCombo} 次)`;
+  document.getElementById("performanceReview").innerText = `${reviewText}\n(最高連續完美擊中：${maxCombo} 次)`;
 
   if(video.srcObject) video.srcObject.getTracks().forEach(track => track.stop());
   if(audioCtx) audioCtx.close();
