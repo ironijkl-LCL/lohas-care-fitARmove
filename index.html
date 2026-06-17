@@ -2,7 +2,7 @@
 <html lang="zh-HK">
 <head>
 <meta charset="UTF-8">
-<title>FitAR 動活+ | FitAR Move+</title>
+<title>FitAR 動活+ | 升級關卡難度版</title>
 
 <style>
 body {
@@ -45,40 +45,37 @@ body {
   font-weight: bold;
 }
 
-/* 區塊標題 */
 .section-title {
-  font-size: 28px;
+  font-size: 26px;
   color: #FFF;
   margin: 15px 0 10px 0;
   font-weight: bold;
   text-shadow: 0 0 5px rgba(255,255,255,0.5);
 }
 
-/* 選擇按鈕組 */
 .option-group {
   display: flex;
   justify-content: center;
   gap: 15px;
-  margin-bottom: 25px;
+  margin-bottom: 20px;
 }
 
 .opt-btn {
-  padding: 15px 35px;
+  padding: 12px 30px;
   border: 3px solid rgba(255,255,255,0.4);
   border-radius: 40px;
-  font-size: 24px;
+  font-size: 22px;
   cursor: pointer;
   background: rgba(255,255,255,0.1);
   color: white;
   font-weight: bold;
   transition: all 0.2s;
-  min-width: 160px;
+  min-width: 140px;
 }
 .opt-btn:hover {
   background: rgba(255,255,255,0.25);
   transform: scale(1.03);
 }
-/* 被選中的按鈕樣式 */
 .opt-btn.active {
   background: #00d4ff !important;
   color: black !important;
@@ -86,17 +83,22 @@ body {
   box-shadow: 0 0 20px rgba(0, 212, 255, 0.6);
 }
 
-/* 特大號開始遊戲按鈕 */
+/* 難度專用顏色 */
+#lv-1.active { background: #00FF88 !important; box-shadow: 0 0 20px rgba(0, 255, 136, 0.6); }
+#lv-2.active { background: #00d4ff !important; box-shadow: 0 0 20px rgba(0, 212, 255, 0.6); }
+#lv-3.active { background: #FFD600 !important; box-shadow: 0 0 20px rgba(255, 214, 0, 0.6); }
+#lv-4.active { background: #FF3366 !important; box-shadow: 0 0 20px rgba(255, 51, 102, 0.6); }
+
 .start-game-btn {
   padding: 22px 60px;
   border: 4px solid #fff;
   border-radius: 50px;
   font-size: 32px;
   cursor: pointer;
-  background: #00FF88;
+  background: #FFD600; /* 樂活黃金掌核心對比色 */
   color: black;
   font-weight: bold;
-  box-shadow: 0 0 25px rgba(0, 255, 136, 0.5);
+  box-shadow: 0 0 25px rgba(255, 214, 0, 0.5);
   transition: all 0.2s;
   width: 400px;
   text-align: center;
@@ -104,7 +106,7 @@ body {
 }
 .start-game-btn:hover {
   transform: scale(1.05);
-  box-shadow: 0 0 40px rgba(0, 255, 136, 0.8);
+  box-shadow: 0 0 40px rgba(255, 214, 0, 0.8);
 }
 
 /* ===== 遊戲畫面 ===== */
@@ -136,26 +138,27 @@ canvas {
 }
 
 .panel {
-  padding: 15px 40px;
+  padding: 12px 35px;
   border-radius: 25px;
   background: rgba(0,0,0,0.85);
-  font-size: 34px;
+  font-size: 30px;
   font-weight: bold;
   border: 3px solid rgba(255,255,255,0.4);
   text-align: right;
-  min-width: 240px;
+  min-width: 260px;
 }
 
-#speedPanel { color: #00d4ff; border-color: #00d4ff; text-shadow: 0 0 10px #00d4ff; }
+#modePanel { color: #00FF88; border-color: #00FF88; }
+#scorePanel { color: #FFD600; border-color: #FFD600; }
+#comboPanel { color: #00d4ff; border-color: #00d4ff; display: none; }
 #timerPanel { color: #FF3366; border-color: #FF3366; text-shadow: 0 0 10px #FF3366; }
 
-/* 頂部大標題 */
 #stageTitle {
   position: absolute;
-  top: 25px;
+  top: 20px;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 45px;
+  font-size: 40px;
   font-weight: 900;
   color: #FFF;
   text-shadow: 0 0 15px #00C2FF;
@@ -166,7 +169,7 @@ canvas {
 /* 動作提示字 */
 #instruction-box {
   position: absolute;
-  top: 110px;
+  top: 100px;
   width: 100%;
   text-align: center;
   z-index: 5;
@@ -174,15 +177,30 @@ canvas {
 
 #instruction {
   display: inline-block;
-  padding: 20px 50px;
+  padding: 15px 45px;
   background: rgba(0, 0, 0, 0.85);
   border-radius: 40px;
   border: 4px solid #00d4ff;
-  font-size: 50px;
+  font-size: 45px;
   color: #fff;
   font-weight: 900;
   text-shadow: 0 0 15px #00d4ff;
   letter-spacing: 2px;
+}
+
+.distract-alert {
+  border-color: #FF3366 !important;
+  color: #FF3366 !important;
+  text-shadow: 0 0 15px #FF3366 !important;
+  animation: shake 0.3s infinite;
+}
+
+@keyframes shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  50% { transform: translateX(5px); }
+  75% { transform: translateX(-5px); }
+  100% { transform: translateX(0); }
 }
 
 .speed-tip {
@@ -203,11 +221,10 @@ canvas {
 }
 
 .avatar-coach {
-  width: 340px;
-  height: 400px;
+  width: 320px;
+  height: 380px;
 }
 
-/* 人體關節藍點 */
 .joint-dot {
   fill: #00E5FF;
   stroke: #fff;
@@ -215,14 +232,12 @@ canvas {
   transition: fill 0.2s, r 0.2s;
 }
 
-/* 確認做到時，藍點變大、變綠、發光 */
 .joint-success {
   fill: #00FF88 !important;
-  r: 5.5px !important;
+  r: 6px !important;
   filter: drop-shadow(0 0 10px #00FF88);
 }
 
-/* 音樂節奏縮放效果圈圈 */
 #musicPulseRing {
   position: absolute;
   top: 50%;
@@ -244,7 +259,6 @@ canvas {
   100% { transform: translate(-50%, -50%) scale(1.4); opacity: 0; }
 }
 
-/* 評級反饋 */
 #rating {
   position:absolute;
   top:45%;
@@ -258,7 +272,6 @@ canvas {
   pointer-events: none;
 }
 
-/* 分數浮字 */
 #scorePop {
   position:absolute;
   top:58%;
@@ -288,7 +301,8 @@ canvas {
 
 .freeze-effect { filter: hue-rotate(180deg) brightness(1.3) contrast(1.2); }
 #endScreen { display:none; background:#111; }
-#finalScore { font-size: 65px; margin-bottom: 40px; }
+#finalScore { font-size: 55px; margin-bottom: 20px; text-align: center; line-height: 1.5; }
+#performanceReview { font-size: 32px; color: #00C2FF; margin-bottom: 40px; font-weight: bold; }
 </style>
 </head>
 
@@ -296,36 +310,45 @@ canvas {
 
 <div id="startScreen" class="screen">
   <h1>FitAR 動活+</h1>
-  <h2>經典廣東歌旋律同步版 🎵</h2>
+  <h2>高階智慧臨床關卡提案版 🎵</h2>
   
-  <div class="section-title">第一步：選擇動作速度</div>
+  <div class="section-title">第一步：選擇訓練模式</div>
   <div class="option-group">
-    <button class="opt-btn active" id="spd-slow" onclick="selectSpeed('slow')">慢速</button>
-    <button class="opt-btn" id="spd-medium" onclick="selectSpeed('medium')">中速</button>
-    <button class="opt-btn" id="spd-normal" onclick="selectSpeed('normal')">正常</button>
+    <button class="opt-btn active" id="md-imitate" onclick="selectMode('imitate')">模仿模式</button>
+    <button class="opt-btn" id="md-react" onclick="selectMode('react')">反應模式</button>
+    <button class="opt-btn" id="md-freeze" onclick="selectMode('freeze')">定格模式</button>
   </div>
 
-  <div class="section-title">第二步：選擇運動時間</div>
+  <div class="section-title">第二步：選擇關卡難度 (長者認知對應)</div>
+  <div class="option-group">
+    <button class="opt-btn active" id="lv-1" onclick="selectLevel(1)">Lv.1 初級</button>
+    <button class="opt-btn" id="lv-2" onclick="selectLevel(2)">Lv.2 基礎</button>
+    <button class="opt-btn" id="lv-3" onclick="selectLevel(3)">Lv.3 進階</button>
+    <button class="opt-btn" id="lv-4" onclick="selectLevel(4)">Lv.4 挑戰</button>
+  </div>
+
+  <div class="section-title">第三步：選擇運動時間</div>
   <div class="option-group">
     <button class="opt-btn" id="time-30" onclick="selectTime(30)">30 秒</button>
     <button class="opt-btn active" id="time-60" onclick="selectTime(60)">60 秒</button>
     <button class="opt-btn" id="time-120" onclick="selectTime(120)">120 秒</button>
   </div>
 
-  <button class="start-game-btn" onclick="startGame()">開始運動挑戰 ➔</button>
+  <button class="start-game-btn" onclick="startGame()">建立關卡並開始 ➔</button>
 </div>
 
 <div id="gameScreen">
   <div id="stageTitle">全身體能挑戰</div>
 
   <div id="topUI">
-    <div id="speedPanel" class="panel">速度：慢速</div>
-    <div id="score" class="panel">目前得分: 0</div>
+    <div id="modePanel" class="panel">模式：模仿模式</div>
+    <div id="scorePanel" class="panel">目前得分: 0</div>
+    <div id="comboPanel" class="panel">連擊: 0 🔥</div>
     <div id="timerPanel" class="panel">剩餘時間: 60</div>
   </div>
 
   <div id="instruction-box">
-    <div id="instruction"><span id="prefix-text" class="speed-tip">慢慢做：</span>準備中...</div>
+    <div id="instruction"><span id="prefix-text" class="speed-tip">準備中：</span>讀取鏡頭中...</div>
   </div>
 
   <div id="musicPulseRing"></div>
@@ -382,6 +405,7 @@ canvas {
 
 <div id="endScreen" class="screen">
   <h1 id="finalScore"></h1>
+  <div id="performanceReview"></div>
   <button class="start-game-btn" onclick="location.reload()">再玩一次</button>
 </div>
 
@@ -389,67 +413,47 @@ canvas {
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 
 <script>
-let score = 0, timeLeft = 60, speedMode = 'slow', actionDuration = 6000;
+// ===== 核心狀態變數 =====
+let score = 0, timeLeft = 60, currentLevel = 1, currentMode = 'imitate';
+let comboCount = 0, maxCombo = 0;
+let actionDuration = 6000, beatIntervalTime = 600;
 let last = null, beatWindow = 0, beatChecked = false;
 let currentAction = "reach", currentActionIndex = 0;
 let beatInterval, actionInterval, timerInterval;
+let isDistractionActive = false; // 是否處於干擾狀態 (Lv.4 假動作/❌請勿動)
 
-// 💡 完整音效鏈路節點與合成器設定
-let audioCtx = null;
-let mainVolumeNode = null;
-let currentNoteIndex = 0;
-
-// 🎼 經典廣東歌《明年今日 / 十年》副歌簡譜音高映射數據鏈路 (純程式碼音樂八音盒)
-// 數字代表簡譜音符：3 2 1 1 7 1 5, 1 1 7 1 1 2 3 2...
-const easonMelodyNotes = [
-  3, 2, 1, 1, 7, 1, 5, 0, // 明年今日 別要再失眠
-  1, 1, 7, 1, 1, 2, 3, 2, // 床褥都改變 理想敷衍
-  3, 2, 1, 1, 7, 1, 5, 5, // 臨別亦要 捉緊禮貌
-  6, 1, 2, 3, 2, 1, 1, 0  // 畢竟分開免客套
-];
-
-// 音符轉換為對應頻率的音高鏈路處理器
-const noteToFreq = {
-  0: 0,
-  5: 196.00, 6: 220.00, 7: 246.94,
-  1: 261.63, 2: 293.66, 3: 329.63, 4: 349.23,
-  55: 392.00, 66: 440.00, 77: 493.88
+// ===== 數值難度矩陣 (五、難度調整參數優化) =====
+const difficultyMatrix = {
+  1: { reaction_time: 5.0, sequence_length: 1, distraction_rate: 0.0, speed: "slow", beat: 600 },
+  2: { reaction_time: 4.0, sequence_length: 2, distraction_rate: 0.0, speed: "medium", beat: 450 },
+  3: { reaction_time: 3.0, sequence_length: 4, distraction_rate: 0.1, speed: "normal", beat: 350 },
+  4: { reaction_time: 1.5, sequence_length: 6, distraction_rate: 0.3, speed: "fast", beat: 260 }
 };
-// 簡譜簡化頻率映射數據
-const melodyFreqs = easonMelodyNotes.map(n => {
-  if(n === 5 && easonMelodyNotes.indexOf(n) > 5) return noteToFreq[5]; 
-  if(n === 5) return 392.00; // 高音5
-  if(n === 6) return 440.00; // 高音6
-  if(n === 7) return 246.94; // 低音7
-  return noteToFreq[n];
-});
 
-const actionsList = [
-  "reach", "run", "knees", "star", 
-  "highlow", "rolls", "jacks", "clap", 
-  "sidebend", "lunge", "twist", "freeze"
+// ===== 音效鏈路與旋律數據 =====
+let audioCtx = null, mainVolumeNode = null, currentNoteIndex = 0;
+const easonMelodyNotes = [
+  3, 2, 1, 1, 7, 1, 5, 0, 1, 1, 7, 1, 1, 2, 3, 2,
+  3, 2, 1, 1, 7, 1, 5, 5, 6, 1, 2, 3, 2, 1, 1, 0
 ];
+const noteToFreq = {
+  0: 0, 5: 196.00, 6: 220.00, 7: 246.94, 1: 261.63, 2: 293.66, 3: 329.63, 4: 349.23, 55: 392.00, 66: 440.00, 77: 493.88
+};
+const melodyFreqs = easonMelodyNotes.map(n => noteToFreq[n]);
 
-const instruction = document.getElementById("instruction");
-const scoreText = document.getElementById("score");
-const rating = document.getElementById("rating");
+const actionsList = ["reach", "run", "knees", "star", "highlow", "rolls", "jacks", "clap", "sidebend", "lunge", "twist", "freeze"];
 
-const video = document.getElementById("video");
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
+// ===== 選單互動函式 =====
+function selectMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('[id^="md-"]').forEach(btn => btn.classList.remove('active'));
+  document.getElementById('md-' + mode).classList.add('active');
+}
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
-window.addEventListener('resize', () => {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-});
-
-function selectSpeed(mode) {
-  speedMode = mode;
-  document.querySelectorAll('[id^="spd-"]').forEach(btn => btn.classList.remove('active'));
-  document.getElementById('spd-' + mode).classList.add('active');
+function selectLevel(lv) {
+  currentLevel = lv;
+  document.querySelectorAll('[id^="lv-"]').forEach(btn => btn.classList.remove('active'));
+  document.getElementById('lv-' + lv).classList.add('active');
 }
 
 function selectTime(seconds) {
@@ -458,155 +462,135 @@ function selectTime(seconds) {
   document.getElementById('time-' + seconds).classList.add('active');
 }
 
-// 🎼 Web Audio API 音效鏈路：自主合成大鼓、伴奏與 Eason 旋律
+// ===== 核心音效鏈路播放器 =====
 function playMusicTick() {
   if (!audioCtx || !mainVolumeNode) return;
-  
   let now = audioCtx.currentTime;
+  
+  // Bass Kick
+  let kickOsc = audioCtx.createOscillator(), kickGain = audioCtx.createGain();
+  kickOsc.connect(kickGain); kickGain.connect(mainVolumeNode);
+  kickOsc.frequency.setValueAtTime(140, now);
+  kickOsc.frequency.exponentialRampToValueAtTime(0.01, now + 0.2);
+  kickGain.gain.setValueAtTime(0.5, now);
+  kickGain.gain.linearRampToValueAtTime(0.001, now + 0.2);
+  kickOsc.start(now); kickOsc.stop(now + 0.2);
 
-  // 1. 低音鏈路：動感重低音大鼓 (Bass Kick) - 負責咬定核心拍點
-  let kickOsc = audioCtx.createOscillator();
-  let kickGain = audioCtx.createGain();
-  kickOsc.connect(kickGain);
-  kickGain.connect(mainVolumeNode);
-  kickOsc.frequency.setValueAtTime(150, now);
-  kickOsc.frequency.exponentialRampToValueAtTime(0.01, now + 0.25);
-  kickGain.gain.setValueAtTime(0.6, now);
-  kickGain.gain.linearRampToValueAtTime(0.001, now + 0.25);
-  kickOsc.start(now);
-  kickOsc.stop(now + 0.25);
-
-  // 2. 旋律鏈路：八音盒純鋼琴音色主旋律 (廣東歌《明年今日》)
+  // 主旋律
   let currentFreq = melodyFreqs[currentNoteIndex];
   if (currentFreq > 0) {
-    let melodyOsc = audioCtx.createOscillator();
-    let melodyGain = audioCtx.createGain();
-    
-    // 使用科技感的正弦波混合三角波，模擬清脆的鋼琴八音盒音色
-    melodyOsc.type = 'sine'; 
-    melodyOsc.connect(melodyGain);
-    melodyGain.connect(mainVolumeNode);
-    
+    let melodyOsc = audioCtx.createOscillator(), melodyGain = audioCtx.createGain();
+    melodyOsc.type = 'sine';
+    melodyOsc.connect(melodyGain); melodyGain.connect(mainVolumeNode);
     melodyOsc.frequency.setValueAtTime(currentFreq, now);
-    
-    // 建立音量包絡線 (Envelope) 防止爆音，產生鋼琴般的淡出尾音
-    melodyGain.gain.setValueAtTime(0.25, now);
-    melodyGain.gain.exponentialRampToValueAtTime(0.005, now + 0.45);
-    
-    melodyOsc.start(now);
-    melodyOsc.stop(now + 0.5);
+    melodyGain.gain.setValueAtTime(0.22, now);
+    melodyGain.gain.exponentialRampToValueAtTime(0.005, now + 0.4);
+    melodyOsc.start(now); melodyOsc.stop(now + 0.45);
   }
-
-  // 3. 和弦伴奏鏈路：依據旋律小節動態變調，增強音樂立體感
-  if (currentNoteIndex % 4 === 0) {
-    let chordNotes = [130.81, 164.81, 196.00]; // C Major 低音和弦基礎
-    if (Math.floor(currentNoteIndex / 8) === 1) chordNotes = [146.83, 174.61, 220.00]; // Dm
-    if (Math.floor(currentNoteIndex / 8) === 3) chordNotes = [174.61, 220.00, 261.63]; // F
-    
-    chordNotes.forEach(f => {
-      let chordOsc = audioCtx.createOscillator();
-      let chordGain = audioCtx.createGain();
-      chordOsc.type = 'triangle';
-      chordOsc.frequency.setValueAtTime(f, now);
-      chordOsc.connect(chordGain);
-      chordGain.connect(mainVolumeNode);
-      chordGain.gain.setValueAtTime(0.08, now);
-      chordGain.gain.linearRampToValueAtTime(0.001, now + 0.8);
-      chordOsc.start(now);
-      chordOsc.stop(now + 0.8);
-    });
-  }
-
-  // 移至下一個音符鏈路節點
   currentNoteIndex = (currentNoteIndex + 1) % melodyFreqs.length;
 }
 
 function beat(){
-  // 執行音訊與節拍鏈路播放
   playMusicTick();
-
-  // 觸發音遊擴散環視覺特效
   const ring = document.getElementById("musicPulseRing");
   ring.classList.remove("ring-pulse");
   void ring.offsetWidth; 
   ring.classList.add("ring-pulse");
-
-  if (!beatChecked && beatWindow > 0) {
-    showRating("加油！再試試");
+  
+  if (!beatChecked && beatWindow > 0 && currentMode !== 'freeze') {
+    // 沒跟上節拍，重設 Combo
+    comboCount = 0;
+    updateComboUI();
   }
   beatWindow = Date.now();
   beatChecked = false;
-  resetJointDots(); 
+  resetJointDots();
 }
 
-// 變更 12 大核心動作與公仔肢體姿勢
+// ===== 動作更新與公仔姿勢控制 =====
 function changeActionTo(index) {
   currentActionIndex = index;
   currentAction = actionsList[index];
   beatChecked = false;
+  isDistractionActive = false;
   resetJointDots();
+  document.getElementById("instruction").classList.remove("distract-alert");
 
-  const gLeft = document.getElementById("girlLeftArm");
-  const gRight = document.getElementById("girlRightArm");
-  const bLeft = document.getElementById("boyLeftArm");
-  const bRight = document.getElementById("boyRightArm");
+  const gLeft = document.getElementById("girlLeftArm"), gRight = document.getElementById("girlRightArm");
+  const bLeft = document.getElementById("boyLeftArm"), bRight = document.getElementById("boyRightArm");
   const dots = ["g_lh", "g_rh", "b_lh", "b_rh"];
 
-  if(currentAction === "reach") {
-    setUI("雙手高舉過頭 🙌"); setArmsUp(gLeft, gRight, bLeft, bRight, dots, 10);
+  // 判定是否混入干擾 (Lv.3/Lv.4 認知挑戰)
+  let cfg = difficultyMatrix[currentLevel];
+  if (Math.random() < cfg.distraction_rate) {
+    isDistractionActive = true;
   }
-  else if(currentAction === "run") {
-    setUI("原地輕鬆踏步 🏃"); setArmsDown(gLeft, gRight, bLeft, bRight, dots);
+
+  // 依不同模式客製化核心UI字樣
+  let uiText = "";
+  if (currentMode === 'imitate') {
+    uiText = getActionChinese(currentAction);
+  } else if (currentMode === 'react') {
+    uiText = "快! 做出：" + getActionChinese(currentAction);
+  } else if (currentMode === 'freeze') {
+    // 定格模式專用隨機指令
+    if (Math.random() < 0.4) {
+      currentAction = "freeze";
+      uiText = "❄ 突然 FREEZE！別動！ ❄";
+    } else {
+      uiText = "動起來：👉 " + getActionChinese(currentAction);
+    }
   }
-  else if(currentAction === "knees") {
-    setUI("慢速交替高抬腿 ⚡"); setArmsDown(gLeft, gRight, bLeft, bRight, dots);
+
+  // 如果觸發高級干擾 (Lv.4 抑制控制訓練)
+  if (isDistractionActive && currentLevel === 4) {
+    if (Math.random() > 0.5) {
+      uiText = "❌ 不要動！！ (假提示)";
+      document.getElementById("instruction").classList.add("distract-alert");
+    }
   }
-  else if(currentAction === "star") {
-    setUI("雙手雙腳左右大張開 ⭐"); setArmsOut(gLeft, gRight, bLeft, bRight, dots);
-  }
-  else if(currentAction === "highlow") {
-    setUI("向上摸天、向下微蹲 ↕"); setArmsUp(gLeft, gRight, bLeft, bRight, dots, 10);
-  }
-  else if(currentAction === "rolls") {
-    setUI("前後緩慢轉動雙肩 🔄"); setArmsDown(gLeft, gRight, bLeft, bRight, dots);
-  }
-  else if(currentAction === "jacks") {
-    setUI("雙腳張開、雙手平舉 🕺"); setArmsOut(gLeft, gRight, bLeft, bRight, dots);
-  }
-  else if(currentAction === "clap") {
-    setUI("雙手向胸前靠攏擊掌 👏");
+
+  setUI(uiText);
+
+  // 公仔肢體對應
+  if(currentAction === "reach" || currentAction === "highlow") {
+    setArmsUp(gLeft, gRight, bLeft, bRight, dots, 10);
+  } else if(["run", "knees", "rolls", "lunge"].includes(currentAction)) {
+    setArmsDown(gLeft, gRight, bLeft, bRight, dots);
+  } else if(currentAction === "star" || currentAction === "jacks" || currentAction === "twist") {
+    setArmsOut(gLeft, gRight, bLeft, bRight, dots);
+  } else if(currentAction === "clap") {
     gLeft.setAttribute("d", "M35,55 C35,45 42,40 45,45 C42,55 38,55 35,55 Z");
     gRight.setAttribute("d", "M65,55 C65,45 58,40 55,45 C58,55 62,55 65,55 Z");
     bLeft.setAttribute("d", "M35,55 C35,45 42,40 45,45 C42,55 38,55 35,55 Z");
     bRight.setAttribute("d", "M65,55 C65,45 58,40 55,45 C58,55 62,55 65,55 Z");
     dsUpdate(45, 55);
-  }
-  else if(currentAction === "sidebend") {
-    setUI("身體往左斜側彎 🧘");
+  } else if(currentAction === "sidebend") {
     gLeft.setAttribute("d", "M35,55 C20,45 15,35 20,25 C25,35 30,45 35,55 Z");
     gRight.setAttribute("d", "M68,55 C80,35 78,20 72,10 C68,20 70,40 65,55 Z");
     bLeft.setAttribute("d", "M35,55 C20,45 15,35 20,25 C25,35 30,45 35,55 Z");
-    brUpdateUp(10);
+    document.getElementById("boyRightArm").setAttribute("d", "M68,55 C80,35 78,20 72,10 C68,20 70,40 65,55 Z");
     updateDotPos("g_lh", 20, 25); updateDotPos("g_rh", 72, 10);
     updateDotPos("b_lh", 20, 25); updateDotPos("b_rh", 72, 10);
+  } else if(currentAction === "freeze") {
+    setArmsUp(gLeft, gRight, bLeft, bRight, dots, 20);
   }
-  else if(currentAction === "lunge") {
-    setUI("雙腳前後大跨弓步 🦵"); setArmsDown(gLeft, gRight, bLeft, bRight, dots);
-  }
-  else if(currentAction === "twist") {
-    setUI("雙手平舉，左右轉腰 🔄"); setArmsOut(gLeft, gRight, bLeft, bRight, dots);
-  }
-  else if(currentAction === "freeze") {
-    setUI("全身定格，保持不動 ❄"); setArmsUp(gLeft, gRight, bLeft, bRight, dots, 20);
-  }
+}
+
+function getActionChinese(act) {
+  return {
+    "reach": "雙手高舉過頭 🙌", "run": "原地輕鬆踏步 🏃", "knees": "交替抬高雙腿 ⚡", "star": "雙手雙腳大張 ⭐",
+    "highlow": "摸天再向下蹲 ↕", "rolls": "緩慢轉動雙肩 🔄", "jacks": "雙手平舉開合 🕺", "clap": "胸前靠攏擊掌 👏",
+    "sidebend": "身體往左側彎 🧘", "lunge": "前後跨大弓步 🦵", "twist": "雙手平舉轉腰 🔄", "freeze": "全身保持定格 ❄"
+  }[act] || "準備運動";
 }
 
 function setUI(text) {
-  const prefix = { 'slow': '慢慢做：', 'medium': '跟著做：', 'normal': '快節奏：' }[speedMode];
-  document.getElementById("prefix-text").innerText = prefix;
-  instruction.innerHTML = `<span id="prefix-text" class="speed-tip">${prefix}</span>${text}`;
+  const prefix = { 1: '慢速引導：', 2: '標準節奏：', 3: '進階挑戰：', 4: '快速極限：' }[currentLevel];
+  document.getElementById("instruction").innerHTML = `<span id="prefix-text" class="speed-tip">${prefix}</span>${text}`;
 }
 
+// ===== 公仔 SVG 骨架更新輔助函式 =====
 function setArmsUp(gl, gr, bl, br, ds, y) {
   gl.setAttribute("d", `M32,55 C20,35 22,20 28,${y} C32,20 30,40 35,55 Z`);
   gr.setAttribute("d", `M68,55 C80,35 78,20 72,${y} C68,20 70,40 65,55 Z`);
@@ -632,28 +616,19 @@ function dsUpdate(x1, x2) {
   updateDotPos("g_lh", x1, 45); updateDotPos("g_rh", x2, 45);
   updateDotPos("b_lh", x1, 45); updateDotPos("b_rh", x2, 45);
 }
-function brUpdateUp(y) {
-  document.getElementById("boyRightArm").setAttribute("d", `M68,55 C80,35 78,20 72,${y} C68,20 70,40 65,55 Z`);
-}
 function updateDotPos(id, x, y) {
   const el = document.getElementById(id);
   if(el) { el.setAttribute("cx", x); el.setAttribute("cy", y); }
 }
-
 function resetJointDots() {
   document.querySelectorAll('.joint-dot').forEach(dot => dot.classList.remove('joint-success'));
 }
-
 function lightUpJoints() {
   let targets = [];
   if(["reach", "highlow", "sidebend", "freeze"].includes(currentAction)) targets = ["g_lh", "g_rh", "b_lh", "b_rh"];
   if(["run", "knees", "lunge"].includes(currentAction)) targets = ["g_lk", "g_rk", "b_lk", "b_rk"];
   if(["star", "jacks", "clap", "rolls", "twist"].includes(currentAction)) targets = ["g_lh", "g_rh", "b_lh", "b_rh"];
-  
-  targets.forEach(id => {
-    const el = document.getElementById(id);
-    if(el) el.classList.add('joint-success');
-  });
+  targets.forEach(id => { const el = document.getElementById(id); if(el) el.classList.add('joint-success'); });
 }
 
 function newAction(){
@@ -661,59 +636,99 @@ function newAction(){
   changeActionTo(nextIndex);
 }
 
-// ===== 核心 12 大動作 AI 骨架判定演算法 =====
+// ===== 六、加分連擊機制與 UI =====
+function updateComboUI() {
+  const el = document.getElementById("comboPanel");
+  if (comboCount >= 3) {
+    el.style.display = "block";
+    el.innerText = `連擊: ${comboCount} 🔥`;
+    if (comboCount > maxCombo) maxCombo = comboCount;
+  } else {
+    el.style.display = "none";
+  }
+}
+
+// ===== 核心 AI 骨架動作判定演算法 (融入長者友善寬鬆係數) =====
 function checkPose(lm) {
+  // 長者友善設計：Lv.1 與 Lv.2 放寬 20% 的判定閥值，降低挫折感
+  const easeFactor = (currentLevel <= 2) ? 1.2 : 1.0;
+
+  // 如果當前是 Lv.4 且畫面上閃爍著 ❌ 假提示，此時正確的反應該是「完全不准動」
+  if (currentLevel === 4 && isDistractionActive && document.getElementById("instruction").classList.contains("distract-alert")) {
+    if(!last) return true;
+    let motion = 0;
+    lm.forEach((p, i) => motion += Math.abs(p.x - last[i].x) + Math.abs(p.y - last[i].y));
+    return motion < (0.12 * easeFactor);
+  }
+
   switch(currentAction) {
-    case "reach": return lm[15].y < lm[0].y && lm[16].y < lm[0].y;
-    case "run": return Math.abs(lm[25].y - lm[26].y) > 0.04;
-    case "knees": return lm[25].y < lm[23].y || lm[26].y < lm[24].y;
-    case "star": return (lm[15].y < lm[0].y && lm[16].y < lm[0].y) && (Math.abs(lm[27].x - lm[28].x) > 0.28);
-    case "highlow": return (lm[15].y < lm[11].y) || (lm[0].y > 0.58);
-    case "rolls": if(!last) return false; return Math.abs(lm[11].y - last[11].y) > 0.015;
-    case "jacks": return Math.abs(lm[27].x - lm[28].x) > 0.25;
-    case "clap": return Math.abs(lm[15].x - lm[16].x) < 0.12;
-    case "sidebend": return lm[15].y < lm[11].y && lm[16].x < lm[12].x;
-    case "lunge": return Math.abs(lm[27].x - lm[28].x) > 0.35;
-    case "twist": if(!last) return false; return Math.abs(lm[11].x - last[11].x) > 0.02;
+    case "reach": 
+      return lm[15].y < lm[0].y * easeFactor && lm[16].y < lm[0].y * easeFactor;
+    case "run": 
+      return Math.abs(lm[25].y - lm[26].y) > (0.035 / easeFactor);
+    case "knees": 
+      return lm[25].y < lm[23].y * easeFactor || lm[26].y < lm[24].y * easeFactor;
+    case "star": 
+      return (lm[15].y < lm[11].y * easeFactor) && (Math.abs(lm[27].x - lm[28].x) > (0.24 / easeFactor));
+    case "highlow": 
+      return (lm[15].y < lm[11].y) || (lm[0].y > (0.55 / easeFactor));
+    case "rolls": 
+      if(!last) return false;
+      return Math.abs(lm[11].y - last[11].y) > (0.012 / easeFactor);
+    case "jacks": 
+      return Math.abs(lm[27].x - lm[28].x) > (0.22 / easeFactor);
+    case "clap": 
+      return Math.abs(lm[15].x - lm[16].x) < (0.15 * easeFactor);
+    case "sidebend": 
+      return lm[15].y < lm[11].y * easeFactor && lm[16].x < lm[12].x * easeFactor;
+    case "lunge": 
+      return Math.abs(lm[27].x - lm[28].x) > (0.30 / easeFactor);
+    case "twist": 
+      if(!last) return false; 
+      return Math.abs(lm[11].x - last[11].x) > (0.015 / easeFactor);
     case "freeze": 
       if(!last) return true;
       let m = 0;
       lm.forEach((p, i) => m += Math.abs(p.x - last[i].x) + Math.abs(p.y - last[i].y));
-      return m < 0.15;
-    default: return false;
+      return m < (0.15 * easeFactor);
+    default: 
+      return false;
   }
 }
 
+// ===== 五、動態拍點時序判定模型 =====
 function judgeTiming(){
   const diff = Date.now() - beatWindow;
-  let maxPerf = (speedMode === 'slow') ? 600 : (speedMode === 'medium' ? 450 : 300);
-  if (diff <= maxPerf) return "完美";
-  if (diff <= maxPerf * 2) return "良好";
+  let basePerf = difficultyMatrix[currentLevel].beat;
+  
+  if (diff <= basePerf) return "完美";
+  if (diff <= basePerf * 1.8) return "良好";
   return "再接再厲";
 }
 
 function showRating(text){
-  rating.innerText = text;
-  rating.style.opacity = 1;
-  if(text === "完美") { rating.style.color = "#00FF88"; rating.style.textShadow = "0 0 25px #00FF88"; }
-  if(text === "良好") { rating.style.color = "#FFD600"; rating.style.textShadow = "0 0 25px #FFD600"; }
-  if(text === "再接再厲") { rating.style.color = "#FF3366"; rating.style.textShadow = "0 0 25px #FF3366"; }
-  setTimeout(() => { if(rating.innerText === text) rating.style.opacity = 0; }, 400);
+  const rat = document.getElementById("rating");
+  rat.innerText = text;
+  rat.style.opacity = 1;
+  if(text === "完美") { rat.style.color = "#00FF88"; rat.style.textShadow = "0 0 25px #00FF88"; }
+  if(text === "良好") { rat.style.color = "#FFD600"; rat.style.textShadow = "0 0 25px #FFD600"; }
+  if(text === "再接再厲") { rat.style.color = "#FF3366"; rat.style.textShadow = "0 0 25px #FF3366"; }
+  setTimeout(() => { if(rat.innerText === text) rat.style.opacity = 0; }, 400);
 }
 
 function scorePopUp(points){
   const el = document.getElementById("scorePop");
   el.innerText = "+" + points; el.style.opacity = 1;
-  el.style.transform = "translate(-50%, -150%)"; 
+  el.style.transform = "translate(-50%, -150%)";
   setTimeout(() => { el.style.opacity = 0; el.style.transform = "translate(-50%,-50%)"; }, 400);
 }
 
 function particles(){
   const gameScreen = document.getElementById("gameScreen");
-  for(let i=0; i<15; i++){
+  for(let i=0; i<12; i++){
     const p = document.createElement("div"); p.className = "particle";
     p.style.left = (window.innerWidth / 2) + "px"; p.style.top = (window.innerHeight / 2) + "px";
-    const angle = Math.random() * Math.PI * 2; const distance = 40 + Math.random() * 120;
+    const angle = Math.random() * Math.PI * 2, distance = 40 + Math.random() * 100;
     p.style.setProperty('--mx', `${Math.cos(angle) * distance}px`);
     p.style.setProperty('--my', `${Math.sin(angle) * distance}px`);
     gameScreen.appendChild(p);
@@ -721,30 +736,40 @@ function particles(){
   }
 }
 
+// ===== MediaPipe 整合與循環邏輯 =====
 const pose = new Pose({ locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}` });
 pose.setOptions({ modelComplexity: 1, smoothLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
-
 pose.onResults(r => {
+  const canvasEl = document.getElementById("canvas");
+  const ctx = canvasEl.getContext("2d");
   ctx.save();
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.translate(canvas.width, 0);
-  ctx.scale(-1, 1);
-  ctx.drawImage(r.image, 0, 0, canvas.width, canvas.height);
+  ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+  ctx.translate(canvasEl.width, 0); ctx.scale(-1, 1);
+  if (r.image) ctx.drawImage(r.image, 0, 0, canvasEl.width, canvasEl.height);
   ctx.restore();
 
   if(r.poseLandmarks){
     const lm = r.poseLandmarks;
     let actionOK = checkPose(lm);
 
-    if(currentAction === "freeze") canvas.classList.add("freeze-effect");
-    else canvas.classList.remove("freeze-effect");
+    if(currentAction === "freeze") canvasEl.classList.add("freeze-effect");
+    else canvasEl.classList.remove("freeze-effect");
 
     if(actionOK && !beatChecked){
       const result = judgeTiming();
       if(result !== "再接再厲") {
-        let earnedPoints = (result === "完美") ? 20 : 10;
+        comboCount++;
+        updateComboUI();
+
+        // 六、連擊加分計算法
+        let comboBonus = 1.0;
+        if (comboCount >= 10) comboBonus = 1.2;
+        else if (comboCount >= 5) comboBonus = 1.1;
+
+        let earnedPoints = Math.round(((result === "完美") ? 20 : 10) * comboBonus);
+        
         score += earnedPoints;
-        scoreText.innerText = "目前得分: " + score;
+        document.getElementById("scorePanel").innerText = "目前得分: " + score;
         beatChecked = true; 
         
         lightUpJoints(); 
@@ -752,17 +777,15 @@ pose.onResults(r => {
         scorePopUp(earnedPoints);
         particles();
         
-        // ⚡ 擊中反饋音效鏈路節點：踩中節拍時發出高亢清脆的確認音效
+        // 特效反饋聲學鏈路
         if(audioCtx) {
-          let hitOsc = audioCtx.createOscillator();
-          let hitGain = audioCtx.createGain();
+          let hitOsc = audioCtx.createOscillator(), hitGain = audioCtx.createGain();
           hitOsc.type = 'sine';
-          hitOsc.frequency.setValueAtTime(result === "完美" ? 587.33 : 493.88, audioCtx.currentTime);
-          hitOsc.connect(hitGain);
-          hitGain.connect(audioCtx.destination);
-          hitGain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-          hitGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
-          hitOsc.start(); hitOsc.stop(audioCtx.currentTime + 0.15);
+          hitOsc.frequency.setValueAtTime(result === "完美" ? 600 : 480, audioCtx.currentTime);
+          hitOsc.connect(hitGain); hitGain.connect(audioCtx.destination);
+          hitGain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+          hitGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+          hitOsc.start(); hitOsc.stop(audioCtx.currentTime + 0.12);
         }
       }
     }
@@ -770,32 +793,34 @@ pose.onResults(r => {
   }
 });
 
+// ===== 關卡啟動核心引擎 =====
 function startGame(){
-  // 核心音效鏈路初始化：解鎖瀏覽器安全限制，建立核心 Master 音量增益鏈路
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   mainVolumeNode = audioCtx.createGain();
-  mainVolumeNode.gain.setValueAtTime(0.7, audioCtx.currentTime); // 調整全域音樂音量
+  mainVolumeNode.gain.setValueAtTime(0.6, audioCtx.currentTime);
   mainVolumeNode.connect(audioCtx.destination);
 
-  let beatIntervalTime = 1000; 
+  // 讀取對應難度層級配置
+  let cfg = difficultyMatrix[currentLevel];
+  beatIntervalTime = cfg.beat;
+  
+  // 依據難度分配動作切換頻率 (仿照參數矩陣)
+  if (currentLevel === 1) actionDuration = 6000;
+  else if (currentLevel === 2) actionDuration = 4500;
+  else if (currentLevel === 3) actionDuration = 3000;
+  else if (currentLevel === 4) actionDuration = 1800;
 
-  if (speedMode === 'slow') {
-    actionDuration = 6000;
-    beatIntervalTime = 600; // 慢速優雅八音盒節奏 (約 100 BPM 一拍)
-    document.getElementById("speedPanel").innerText = "速度：慢速";
-  } else if (speedMode === 'medium') {
-    actionDuration = 4000;
-    beatIntervalTime = 420; // 中速流行樂節奏 (約 140 BPM 一拍)
-    document.getElementById("speedPanel").innerText = "速度：中速";
-  } else if (speedMode === 'normal') {
-    actionDuration = 2500;
-    beatIntervalTime = 300; // 正常速：快節奏電子舞曲高頻鏈路 (BPM 高達 200，運動感拉滿)
-    document.getElementById("speedPanel").innerText = "速度：正常速";
-  }
-
+  // 更新介面頂部控制台面版
+  const modeCht = { 'imitate': '模仿模式', 'react': '反應速度', 'freeze': '定格控制' }[currentMode];
+  document.getElementById("modePanel").innerText = `模式：${modeCht} (Lv.${currentLevel})`;
   document.getElementById("timerPanel").innerText = "剩餘時間: " + timeLeft;
+  
   document.getElementById("startScreen").style.display = "none";
   document.getElementById("gameScreen").style.display = "block";
+
+  const canvasEl = document.getElementById("canvas");
+  canvasEl.width = window.innerWidth;
+  canvasEl.height = window.innerHeight;
 
   const cam = new Camera(video,{ onFrame: async () => await pose.send({image:video}), width:640, height:480 });
   cam.start();
@@ -813,13 +838,29 @@ function startGame(){
   actionInterval = setInterval(newAction, actionDuration); 
 }
 
+// ===== 結算與臨床指標反饋系統 =====
 function endGame(){
   document.getElementById("gameScreen").style.display = "none";
   document.getElementById("endScreen").style.display = "flex";
-  document.getElementById("finalScore").innerText = "運動挑戰完成！最終得分：" + score;
+  
+  document.getElementById("finalScore").innerText = `🎉 體能挑戰完成！\n最終得分：${score} 分`;
+  
+  // 依據分數與連擊數輸出臨床回饋語
+  let reviewText = "";
+  if (score >= 300) reviewText = "🎯 卓越表現！身體協調度與抑制控制能力極佳。";
+  else if (score >= 150) reviewText = "👍 良好表現！能有效跟隨中高強度旋律與節奏。";
+  else reviewText = "🌱 持續進步！建議多從 Lv.1 初級模式開始每天規律練習。";
+
+  document.getElementById("performanceReview").innerText = `${reviewText}\n(最高連擊紀錄：${maxCombo} 次)`;
+
   if(video.srcObject) video.srcObject.getTracks().forEach(track => track.stop());
   if(audioCtx) audioCtx.close();
 }
+
+window.addEventListener('resize', () => {
+  const canvasEl = document.getElementById("canvas");
+  if(canvasEl) { canvasEl.width = window.innerWidth; canvasEl.height = window.innerHeight; }
+});
 </script>
 
 </body>
