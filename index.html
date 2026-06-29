@@ -351,8 +351,7 @@ canvas {
   <button class="start-game-btn" onclick="location.reload()">再玩一次</button>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+<script src="https://sf3-ttcdn-tos.pstatp.com/obj/volcengine/byteplus-effects-sdk.js"></script>
 
 <script>
 let score = 0, timeLeft = 60, currentLevel = 1, currentMode = 'imitate';
@@ -362,6 +361,7 @@ let last = null, beatWindow = 0, beatChecked = false;
 let currentAction = "reach", currentActionIndex = 0;
 let beatInterval, actionInterval, timerInterval;
 let isDistractionActive = false;
+let effectEngine = null; // BytePlus SDK 引擎實例
 
 const difficultyMatrix = {
   1: { reaction_time: 5.0, sequence_length: 1, distraction_rate: 0.0, speed: "slow", beat: 600 },
@@ -378,19 +378,19 @@ const melodyFreqs = easonMelodyNotes.map(n => noteToFreq[n] || 0);
 
 const actionsList = ["reach", "run", "knees", "star", "highlow", "rolls", "jacks", "clap", "sidebend", "freeze"];
 
-// 新增：高對比 SVG 視覺圖示提示映射數據
+// 高對比 SVG 視覺圖示提示映射數據
 const svgTemplates = {
-  "reach": `<path d="M12 22V10M12 10L8 14M12 10L16 14M6 6H18" stroke="#00FF88"/>`, // 舉手
-  "run": `<circle cx="12" cy="5" r="2"/><path d="M12 7v6l-3 4M12 9l4 3M9 11l-2-2"/>`, // 跑步
-  "knees": `<path d="M12 4v8m0 0l4 5M12 12l-5-2M19 20H5"/>`, // 抬腿
-  "star": `<path d="M12 2L15 8L22 9L17 14L18 21L12 17L6 21L7 14L2 9L9 8Z" fill="#FFD600"/>`, // 星星
-  "highlow": `<path d="M12 3v12M12 3L8 7M12 3l4 4M7 21h10"/>`, // 上下摸
-  "rolls": `<path d="M21 12a9 9 0 1 1-9-9" stroke="#00d4ff"/><path d="M12 1v4l-2-2Z"/>`, // 肩膀旋轉
-  "jacks": `<path d="M5 12h14M12 5v14"/>`, // 平舉開合
-  "clap": `<path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10Z"/><path d="M8 12h8"/>`, // 擊掌
-  "sidebend": `<path d="M12 3a9 9 0 0 0-9 9h3a6 6 0 0 1 6-6V3Z" fill="#00d4ff"/>`, // 側彎
-  "freeze": `<path d="M12 2v20M2 12h20M5 5l14 14M19 5L5 19" stroke="#FF3366"/>`, // 定格
-  "alert": `<path d="M12 9v4M12 17h.01" stroke-width="4"/><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>` // 假提示
+  "reach": `<path d="M12 22V10M12 10L8 14M12 10L16 14M6 6H18" stroke="#00FF88"/>`, 
+  "run": `<circle cx="12" cy="5" r="2"/><path d="M12 7v6l-3 4M12 9l4 3M9 11l-2-2"/>`, 
+  "knees": `<path d="M12 4v8m0 0l4 5M12 12l-5-2M19 20H5"/>`, 
+  "star": `<path d="M12 2L15 8L22 9L17 14L18 21L12 17L6 21L7 14L2 9L9 8Z" fill="#FFD600"/>`, 
+  "highlow": `<path d="M12 3v12M12 3L8 7M12 3l4 4M7 21h10"/>`, 
+  "rolls": `<path d="M21 12a9 9 0 1 1-9-9" stroke="#00d4ff"/><path d="M12 1v4l-2-2Z"/>`, 
+  "jacks": `<path d="M5 12h14M12 5v14"/>`, 
+  "clap": `<path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10Z"/><path d="M8 12h8"/>`, 
+  "sidebend": `<path d="M12 3a9 9 0 0 0-9 9h3a6 6 0 0 1 6-6V3Z" fill="#00d4ff"/>`, 
+  "freeze": `<path d="M12 2v20M2 12h20M5 5l14 14M19 5L5 19" stroke="#FF3366"/>`, 
+  "alert": `<path d="M12 9v4M12 17h.01" stroke-width="4"/><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>` 
 };
 
 function selectMode(mode) {
@@ -485,7 +485,6 @@ function changeActionTo(index) {
     }
   }
 
-  // 實作認知干擾假提示：變更圖示與框線
   if (isDistractionActive && currentLevel === 4) {
     if (Math.random() > 0.5) {
       uiText = "❌ 不要動！！ (假提示)";
@@ -496,7 +495,6 @@ function changeActionTo(index) {
 
   setUI(uiText, iconKey);
 
-  // 公仔動作變形
   if(currentAction === "reach" || currentAction === "highlow") {
     setArmsUp(gLeft, gRight, bLeft, bRight, dots, 10);
   } else if(["run", "knees", "rolls"].includes(currentAction)) {
@@ -527,7 +525,6 @@ function getActionChinese(act) {
   }[act] || "準備運動";
 }
 
-// 動態更換 SVG 提示圖示與文字
 function setUI(text, iconKey) {
   const prefix = { 1: '慢速引導：', 2: '標準節奏：', 3: '進階挑戰：', 4: '快速極限：' }[currentLevel];
   document.getElementById("instruction-text").innerHTML = `<span class="speed-tip">${prefix}</span>${text}`;
@@ -536,7 +533,6 @@ function setUI(text, iconKey) {
   svgEl.innerHTML = svgTemplates[iconKey] || "";
 }
 
-// ===== 公仔關件鏈路與幾何判定輔助 =====
 function setArmsUp(gl, gr, bl, br, ds, y) {
   gl.setAttribute("d", `M32,55 C20,35 22,20 28,${y} C32,20 30,40 35,55 Z`);
   gr.setAttribute("d", `M68,55 C80,35 78,20 72,${y} C68,20 70,40 65,55 Z`);
@@ -581,31 +577,54 @@ function updateComboUI() {
   else { el.style.display = "none"; }
 }
 
-// ===== 👉 🧠 核心 AI 辨識判斷邏輯（幾何演算法與解算器） =====
-function checkPose(lm) {
-  // 長者認知與生理補償係數
+// ===== 👉 🧠 核心 BytePlus AI 幾何演算法解算器 =====
+// 對齊 BytePlus 標準骨骼節點：0=頭頂/鼻子, 4=左手腕, 7=右手腕, 11=左髖, 12=右髖, 13=左膝, 14=右膝, 15=左腳踝, 16=右腳踝
+function checkPose(kp) {
   const easeFactor = (currentLevel <= 2) ? 1.25 : 1.0;
 
   // 假提示抑制判定
   if (currentLevel === 4 && isDistractionActive && document.getElementById("instruction-container").classList.contains("distract-border")) {
     if(!last) return true;
     let motion = 0;
-    lm.forEach((p, i) => motion += Math.abs(p.x - last[i].x) + Math.abs(p.y - last[i].y));
+    kp.forEach((p, i) => motion += Math.abs(p.x - last[i].x) + Math.abs(p.y - last[i].y));
     return motion < (0.12 * easeFactor);
   }
 
   switch(currentAction) {
-    case "reach": return lm[15].y < lm[0].y * easeFactor && lm[16].y < lm[0].y * easeFactor;
-    case "run": return Math.abs(lm[25].y - lm[26].y) > (0.035 / easeFactor);
-    case "knees": return lm[25].y < lm[23].y * easeFactor || lm[26].y < lm[24].y * easeFactor;
-    case "star": return (lm[15].y < lm[11].y * easeFactor) && (Math.abs(lm[27].x - lm[28].x) > (0.24 / easeFactor));
-    case "highlow": return (lm[15].y < lm[11].y) || (lm[0].y > (0.55 / easeFactor));
-    case "rolls": if(!last) return false; return Math.abs(lm[11].y - last[11].y) > (0.012 / easeFactor);
-    case "jacks": return Math.abs(lm[27].x - lm[28].x) > (0.22 / easeFactor);
-    case "clap": return Math.abs(lm[15].x - lm[16].x) < (0.15 * easeFactor);
-    case "sidebend": return lm[15].y < lm[11].y * easeFactor && lm[16].x < lm[12].x * easeFactor;
-    case "freeze": if(!last) return true; let m = 0; lm.forEach((p, i) => m += Math.abs(p.x - last[i].x) + Math.abs(p.y - last[i].y)); return m < (0.15 * easeFactor);
-    default: return false;
+    case "reach": 
+      // 雙手腕 Y 軸座標高於頭頂/鼻子
+      return kp[4].y < kp[0].y * easeFactor && kp[7].y < kp[0].y * easeFactor;
+    case "run": 
+      // 左右膝關節動態位移差
+      return Math.abs(kp[13].y - kp[14].y) > (0.035 / easeFactor);
+    case "knees": 
+      // 左膝或右膝高度高於（小於）對應髖關節高度
+      return kp[13].y < kp[11].y * easeFactor || kp[14].y < kp[12].y * easeFactor;
+    case "star": 
+      // 雙手張開且雙腳踝橫向間距拉開
+      return (kp[4].y < kp[11].y * easeFactor) && (Math.abs(kp[15].x - kp[16].x) > (0.24 / easeFactor));
+    case "highlow": 
+      // 手腕舉高或頭部下蹲沉降
+      return (kp[4].y < kp[11].y) || (kp[0].y > (0.55 / easeFactor));
+    case "rolls": 
+      if(!last) return false; 
+      return Math.abs(kp[11].y - last[11].y) > (0.012 / easeFactor);
+    case "jacks": 
+      // 開合跳腳踝間距判定
+      return Math.abs(kp[15].x - kp[16].x) > (0.22 / easeFactor);
+    case "clap": 
+      // 左右手腕橫向間距縮小完成靠攏
+      return Math.abs(kp[4].x - kp[7].x) < (0.15 * easeFactor);
+    case "sidebend": 
+      // 單側手腕高舉，身軀與對側手產生側向拉伸
+      return kp[4].y < kp[11].y * easeFactor && kp[7].x < kp[12].x * easeFactor;
+    case "freeze": 
+      if(!last) return true; 
+      let m = 0; 
+      kp.forEach((p, i) => m += Math.abs(p.x - last[i].x) + Math.abs(p.y - last[i].y)); 
+      return m < (0.15 * easeFactor);
+    default: 
+      return false;
   }
 }
 
@@ -639,48 +658,7 @@ function particles(){
   }
 }
 
-// MediaPipe Pose 綁定
-const pose = new Pose({ locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}` });
-pose.setOptions({ modelComplexity: 1, smoothLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
-pose.onResults(r => {
-  const canvasEl = document.getElementById("canvas"); const ctx = canvasEl.getContext("2d");
-  ctx.save(); ctx.clearRect(0, 0, canvasEl.width, canvasEl.height); ctx.translate(canvasEl.width, 0); ctx.scale(-1, 1);
-  if (r.image) ctx.drawImage(r.image, 0, 0, canvasEl.width, canvasEl.height);
-  ctx.restore();
-
-  if(r.poseLandmarks){
-    const lm = r.poseLandmarks;
-    let isCorrect = checkPose(lm);
-
-    if(currentAction === "freeze") canvasEl.classList.add("freeze-effect");
-    else canvasEl.classList.remove("freeze-effect");
-
-    // 核心憲章：idx++ 及增量嚴格鎖定於 true 分支內
-    if(isCorrect && !beatChecked){
-      const result = judgeTiming();
-      if(result !== "再接再厲") {
-        comboCount++; updateComboUI();
-        let comboBonus = (comboCount >= 10) ? 1.2 : ((comboCount >= 5) ? 1.1 : 1.0);
-        let earnedPoints = Math.round(((result === "完美") ? 20 : 10) * comboBonus);
-        
-        score += earnedPoints;
-        document.getElementById("scorePanel").innerText = "目前得分: " + score;
-        beatChecked = true; lightUpJoints(); showRating(result); scorePopUp(earnedPoints); particles();
-        
-        if(audioCtx) {
-          let hitOsc = audioCtx.createOscillator(), hitGain = audioCtx.createGain(); hitOsc.type = 'sine';
-          hitOsc.frequency.setValueAtTime(result === "完美" ? 600 : 480, audioCtx.currentTime);
-          hitOsc.connect(hitGain); hitGain.connect(audioCtx.destination);
-          hitGain.gain.setValueAtTime(0.12, audioCtx.currentTime); hitGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
-          hitOsc.start(); hitOsc.stop(audioCtx.currentTime + 0.12);
-        }
-      }
-    }
-    last = lm;
-  }
-});
-
-function startGame(){
+async function startGame(){
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   mainVolumeNode = audioCtx.createGain(); mainVolumeNode.gain.setValueAtTime(0.5, audioCtx.currentTime); mainVolumeNode.connect(audioCtx.destination);
 
@@ -693,15 +671,79 @@ function startGame(){
   document.getElementById("startScreen").style.display = "none";
   document.getElementById("gameScreen").style.display = "block";
 
-  const canvasEl = document.getElementById("canvas"); canvasEl.width = window.innerWidth; canvasEl.height = window.innerHeight;
-  const cam = new Camera(video,{ onFrame: async () => await pose.send({image:video}), width:640, height:480 }); cam.start();
+  const canvasEl = document.getElementById("canvas"); 
+  canvasEl.width = window.innerWidth; 
+  canvasEl.height = window.innerHeight;
+  const videoEl = document.getElementById("video");
+
+  // 初始化 BytePlus Effects Web SDK 視覺引擎
+  effectEngine = new BytePlusEffectsSDK.EffectEngine({
+    canvas: canvasEl,
+    licenseData: "YOUR_BYTEPLUS_LICENSE_BASE64_STRING" // ⚠️ 備份提示：請在此處替換放入你的專屬授權碼 Base64 碼
+  });
+
+  await effectEngine.init();
+  // 激活人體全動態關節追蹤演算法
+  await effectEngine.enableAlgorithm(BytePlusEffectsSDK.AlgorithmType.SKELETON);
+
+  // 獲取硬件鏡頭媒體流
+  const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 }, audio: false });
+  videoEl.srcObject = stream;
+  videoEl.play();
+
+  // 實作符合長者復康系統的高階實時 Pipeline 解算機制
+  function processBytePlusFrameLoop() {
+    if (!videoEl.paused && !videoEl.ended) {
+      effectEngine.processVideoFrame(videoEl).then((results) => {
+        if (results && results.skeletonData && results.skeletonData.keypoints) {
+          const kp = results.skeletonData.keypoints;
+          let isCorrect = checkPose(kp);
+
+          if(currentAction === "freeze") canvasEl.classList.add("freeze-effect");
+          else canvasEl.classList.remove("freeze-effect");
+
+          // 核心憲章：得分判定及鎖定機制
+          if(isCorrect && !beatChecked){
+            const result = judgeTiming();
+            if(result !== "再接再厲") {
+              comboCount++; updateComboUI();
+              let comboBonus = (comboCount >= 10) ? 1.2 : ((comboCount >= 5) ? 1.1 : 1.0);
+              let earnedPoints = Math.round(((result === "完美") ? 20 : 10) * comboBonus);
+              
+              score += earnedPoints;
+              document.getElementById("scorePanel").innerText = "目前得分: " + score;
+              beatChecked = true; lightUpJoints(); showRating(result); scorePopUp(earnedPoints); particles();
+              
+              if(audioCtx) {
+                let hitOsc = audioCtx.createOscillator(), hitGain = audioCtx.createGain(); hitOsc.type = 'sine';
+                hitOsc.frequency.setValueAtTime(result === "完美" ? 600 : 480, audioCtx.currentTime);
+                hitOsc.connect(hitGain); hitGain.connect(audioCtx.destination);
+                hitGain.gain.setValueAtTime(0.12, audioCtx.currentTime); hitGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+                hitOsc.start(); hitOsc.stop(audioCtx.currentTime + 0.12);
+              }
+            }
+          }
+          last = kp;
+        }
+        requestAnimationFrame(processBytePlusFrameLoop);
+      }).catch(err => {
+        requestAnimationFrame(processBytePlusFrameLoop);
+      });
+    }
+  }
+
+  videoEl.onloadedmetadata = () => {
+    processBytePlusFrameLoop();
+  };
 
   timerInterval = setInterval(() => {
     timeLeft--; document.getElementById("timerPanel").innerText = "剩餘時間: " + timeLeft;
     if(timeLeft <= 0){ clearInterval(timerInterval); clearInterval(beatInterval); clearInterval(actionInterval); endGame(); }
   }, 1000);
 
-  changeActionTo(0); beatInterval = setInterval(beat, beatIntervalTime); actionInterval = setInterval(newAction, actionDuration); 
+  changeActionTo(0); 
+  beatInterval = setInterval(beat, beatIntervalTime); 
+  actionInterval = setInterval(newAction, actionDuration); 
 }
 
 function endGame(){
