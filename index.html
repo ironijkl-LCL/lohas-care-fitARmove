@@ -121,7 +121,7 @@ canvas {
   width: 100vw;
   height: 100vh;
   object-fit: cover;
-  transform: scaleX(-1); /* 鏡像顯示，更符合長者運動直覺 */
+  transform: scaleX(-1); /* 核心修正：鏡像水平翻轉，符合長者照鏡運動直覺 */
 }
 
 #topUI {
@@ -150,7 +150,7 @@ canvas {
 #comboPanel { color: #00d4ff; border-color: #00d4ff; display: none; }
 #timerPanel { color: #FF3366; border-color: #FF3366; }
 
-/* 中央視覺提示區 */
+/* 核心升級：中央視覺提示區（內嵌大圖示） */
 #instruction-box {
   position: absolute;
   top: 90px;
@@ -206,7 +206,7 @@ canvas {
 
 .speed-tip { color: #FFD600; text-shadow: 0 0 10px #FFD600; }
 
-/* 底部教練公仔 */
+/* 底部純色塊公仔組 */
 #coachContainer {
   position: absolute;
   bottom: 30px;
@@ -250,10 +250,9 @@ canvas {
 #finalScore { font-size: 55px; margin-bottom: 20px; text-align: center; line-height: 1.5; }
 #performanceReview { font-size: 32px; color: #00C2FF; margin-bottom: 40px; font-weight: bold; text-align: center; }
 
-/* 凍結效果濾鏡 */
 .freeze-effect {
-  filter: saturate(0.5) hue-rotate(180deg) brightness(1.2);
-  transition: filter 0.3s;
+  filter: saturate(0.4) hue-rotate(180deg) brightness(1.2);
+  transition: filter 0.3s ease;
 }
 </style>
 </head>
@@ -369,7 +368,7 @@ let currentAction = "reach", currentActionIndex = 0;
 let beatInterval, actionInterval, timerInterval;
 let isDistractionActive = false;
 let effectEngine = null; 
-let useFallbackVideo = false; // 是否啟用備用原生鏡頭渲染
+let isFallbackActive = false; // 降級機制旗標
 
 const difficultyMatrix = {
   1: { reaction_time: 5.0, sequence_length: 1, distraction_rate: 0.0, speed: "slow", beat: 600 },
@@ -405,17 +404,9 @@ function selectMode(mode) {
   document.getElementById('md-' + mode).classList.add('active');
 }
 
-function selectLevel(lv) {
-  currentLevel = lv;
-  document.querySelectorAll('[id^="lv-"]').forEach(btn => btn.classList.remove('active'));
-  document.getElementById('lv-' + lv).classList.add('active');
-}
-
-function selectTime(seconds) {
-  timeLeft = seconds;
-  document.querySelectorAll('[id^="time-"]').forEach(btn => btn.classList.remove('active'));
-  document.getElementById('time-' + seconds).classList.add('active');
-}
+/* 略過不變的核心 UI 更新邏輯以節省篇幅 */
+function selectLevel(lv) { currentLevel = lv; document.querySelectorAll('[id^="lv-"]').forEach(btn => btn.classList.remove('active')); document.getElementById('lv-' + lv).classList.add('active'); }
+function selectTime(seconds) { timeLeft = seconds; document.querySelectorAll('[id^="time-"]').forEach(btn => btn.classList.remove('active')); document.getElementById('time-' + seconds).classList.add('active'); }
 
 function playMusicTick() {
   if (!audioCtx || !mainVolumeNode) return;
@@ -444,31 +435,14 @@ function playMusicTick() {
 function beat(){
   playMusicTick();
   const ring = document.getElementById("musicPulseRing");
-  if(ring) {
-    ring.classList.remove("ring-pulse");
-    void ring.offsetWidth; 
-    ring.classList.add("ring-pulse");
-  }
-  
-  if (!beatChecked && beatWindow > 0 && currentMode !== 'freeze') {
-    comboCount = 0;
-    updateComboUI();
-  }
-  beatWindow = Date.now();
-  beatChecked = false;
-  resetJointDots();
+  if(ring) { ring.classList.remove("ring-pulse"); void ring.offsetWidth; ring.classList.add("ring-pulse"); }
+  if (!beatChecked && beatWindow > 0 && currentMode !== 'freeze') { comboCount = 0; updateComboUI(); }
+  beatWindow = Date.now(); beatChecked = false; resetJointDots();
 }
 
 function changeActionTo(index) {
-  currentActionIndex = index;
-  currentAction = actionsList[index];
-  beatChecked = false;
-  isDistractionActive = false;
-  resetJointDots();
-  
-  const container = document.getElementById("instruction-container");
-  container.classList.remove("distract-border");
-
+  currentActionIndex = index; currentAction = actionsList[index]; beatChecked = false; isDistractionActive = false; resetJointDots();
+  const container = document.getElementById("instruction-container"); container.classList.remove("distract-border");
   const gLeft = document.getElementById("girlLeftArm"), gRight = document.getElementById("girlRightArm");
   const bLeft = document.getElementById("boyLeftArm"), bRight = document.getElementById("boyRightArm");
   const dots = ["g_lh", "g_rh", "b_lh", "b_rh"];
@@ -476,187 +450,73 @@ function changeActionTo(index) {
   let cfg = difficultyMatrix[currentLevel];
   if (Math.random() < cfg.distraction_rate) isDistractionActive = true;
 
-  let uiText = "";
-  let iconKey = currentAction;
-
-  if (currentMode === 'imitate') {
-    uiText = getActionChinese(currentAction);
-  } else if (currentMode === 'react') {
-    uiText = "快! 做出：" + getActionChinese(currentAction);
-  } else if (currentMode === 'freeze') {
-    if (Math.random() < 0.45) {
-      currentAction = "freeze";
-      iconKey = "freeze";
-      uiText = "❄ 突然 FREEZE！定格別動！ ❄";
-    } else {
-      uiText = "跟著動：👉 " + getActionChinese(currentAction);
-    }
+  let uiText = "", iconKey = currentAction;
+  if (currentMode === 'imitate') uiText = getActionChinese(currentAction);
+  else if (currentMode === 'react') uiText = "快! 做出：" + getActionChinese(currentAction);
+  else if (currentMode === 'freeze') {
+    if (Math.random() < 0.45) { currentAction = "freeze"; iconKey = "freeze"; uiText = "❄ 突然 FREEZE！定格別動！ ❄"; }
+    else uiText = "跟著動：👉 " + getActionChinese(currentAction);
   }
-
-  if (isDistractionActive && currentLevel === 4) {
-    if (Math.random() > 0.5) {
-      uiText = "❌ 不要動！！ (假提示)";
-      iconKey = "alert";
-      container.classList.add("distract-border");
-    }
-  }
-
+  if (isDistractionActive && currentLevel === 4 && Math.random() > 0.5) { uiText = "❌ 不要動！！ (假提示)"; iconKey = "alert"; container.classList.add("distract-border"); }
   setUI(uiText, iconKey);
 
-  if(currentAction === "reach" || currentAction === "highlow") {
-    setArmsUp(gLeft, gRight, bLeft, bRight, dots, 10);
-  } else if(["run", "knees", "rolls"].includes(currentAction)) {
-    setArmsDown(gLeft, gRight, bLeft, bRight, dots);
-  } else if(currentAction === "star" || currentAction === "jacks" || currentAction === "twist") {
-    setArmsOut(gLeft, gRight, bLeft, bRight, dots);
-  } else if(currentAction === "clap") {
-    gLeft.setAttribute("d", "M35,55 C35,45 42,40 45,45 C42,55 38,55 35,55 Z");
-    gRight.setAttribute("d", "M65,55 C65,45 58,40 55,45 C58,55 62,55 65,55 Z");
-    bLeft.setAttribute("d", "M35,55 C35,45 42,40 45,45 C42,55 38,55 35,55 Z");
-    bRight.setAttribute("d", "M65,55 C65,45 58,40 55,45 C58,55 62,55 65,55 Z");
+  if(currentAction === "reach" || currentAction === "highlow") setArmsUp(gLeft, gRight, bLeft, bRight, dots, 10);
+  else if(["run", "knees", "rolls"].includes(currentAction)) setArmsDown(gLeft, gRight, bLeft, bRight, dots);
+  else if(currentAction === "star" || currentAction === "jacks" || currentAction === "twist") setArmsOut(gLeft, gRight, bLeft, bRight, dots);
+  else if(currentAction === "clap") {
+    gLeft.setAttribute("d", "M35,55 C35,45 42,40 45,45 C42,55 38,55 35,55 Z"); gRight.setAttribute("d", "M65,55 C65,45 58,40 55,45 C58,55 62,55 65,55 Z");
+    bLeft.setAttribute("d", "M35,55 C35,45 42,40 45,45 C42,55 38,55 35,55 Z"); bRight.setAttribute("d", "M65,55 C65,45 58,40 55,45 C58,55 62,55 65,55 Z");
     dsUpdate(45, 55);
   } else if(currentAction === "sidebend") {
-    gLeft.setAttribute("d", "M35,55 C20,45 15,35 20,25 C25,35 30,45 35,55 Z");
-    gRight.setAttribute("d", "M68,55 C80,35 78,20 72,10 C68,20 70,40 65,55 Z");
-    bLeft.setAttribute("d", "M35,55 C20,45 15,35 20,25 C25,35 30,45 35,55 Z");
-    brUpdateUp(10); updateDotPos("g_lh", 20, 25); updateDotPos("g_rh", 72, 10); updateDotPos("b_lh", 20, 25); updateDotPos("b_rh", 72, 10);
-  } else if(currentAction === "freeze") {
-    setArmsUp(gLeft, gRight, bLeft, bRight, dots, 20);
-  }
+    gLeft.setAttribute("d", "M35,55 C20,45 15,35 20,25 C25,35 30,45 35,55 Z"); gRight.setAttribute("d", "M68,55 C80,35 78,20 72,10 C68,20 70,40 65,55 Z");
+    bLeft.setAttribute("d", "M35,55 C20,45 15,35 20,25 C25,35 30,45 35,55 Z"); brUpdateUp(10); 
+    updateDotPos("g_lh", 20, 25); updateDotPos("g_rh", 72, 10); updateDotPos("b_lh", 20, 25); updateDotPos("b_rh", 72, 10);
+  } else if(currentAction === "freeze") setArmsUp(gLeft, gRight, bLeft, bRight, dots, 20);
 }
 
-function getActionChinese(act) {
-  return {
-    "reach": "雙手高舉過頭 🙌", "run": "原地輕鬆踏步 🏃", "knees": "交替抬高雙腿 ⚡", "star": "雙手雙腳大張 ⭐",
-    "highlow": "摸天再向下蹲 ↕", "rolls": "緩慢轉動雙肩 🔄", "jacks": "雙手平舉開合 🕺", "clap": "胸前靠攏擊掌 👏",
-    "sidebend": "身體往左側彎 🧘", "freeze": "全身保持定格 ❄"
-  }[act] || "準備運動";
-}
-
-function setUI(text, iconKey) {
-  const prefix = { 1: '慢速引導：', 2: '標準節奏：', 3: '進階挑戰：', 4: '快速極限：' }[currentLevel];
-  document.getElementById("instruction-text").innerHTML = `<span class="speed-tip">${prefix}</span>${text}`;
-  
-  const svgEl = document.getElementById("visual-svg");
-  svgEl.innerHTML = svgTemplates[iconKey] || "";
-}
-
-function setArmsUp(gl, gr, bl, br, ds, y) {
-  gl.setAttribute("d", `M32,55 C20,35 22,20 28,${y} C32,20 30,40 35,55 Z`);
-  gr.setAttribute("d", `M68,55 C80,35 78,20 72,${y} C68,20 70,40 65,55 Z`);
-  bl.setAttribute("d", `M32,55 C20,35 22,20 28,${y} C32,20 30,40 35,55 Z`);
-  br.setAttribute("d", `M68,55 C80,35 78,20 72,${y} C68,20 70,40 65,55 Z`);
-  ds.forEach((id, i) => updateDotPos(id, i%2===0 ? 28 : 72, y));
-}
-function setArmsDown(gl, gr, bl, br, ds) {
-  gl.setAttribute("d", "M35,55 C25,65 22,75 25,85 C30,75 32,65 35,55 Z");
-  gr.setAttribute("d", "M65,55 C75,65 78,75 75,85 C70,75 68,65 65,55 Z");
-  bl.setAttribute("d", "M35,55 C25,65 22,75 25,85 C30,75 32,65 35,55 Z");
-  br.setAttribute("d", "M65,55 C75,65 78,75 75,85 C70,75 68,65 65,55 Z");
-  ds.forEach((id, i) => updateDotPos(id, i%2===0 ? 25 : 75, 85));
-}
-function setArmsOut(gl, gr, bl, br, ds) {
-  gl.setAttribute("d", "M35,55 C15,50 10,45 5,45 C10,55 20,58 35,55 Z");
-  gr.setAttribute("d", "M65,55 C85,50 90,45 95,45 C90,55 80,58 65,55 Z");
-  bl.setAttribute("d", "M35,55 C15,50 10,45 5,45 C10,55 20,58 35,55 Z");
-  br.setAttribute("d", "M65,55 C85,50 90,45 95,45 C90,55 80,58 65,55 Z");
-  ds.forEach((id, i) => updateDotPos(id, i%2===0 ? 5 : 95, 45));
-}
-function dsUpdate(x1, x2) {
-  updateDotPos("g_lh", x1, 45); updateDotPos("g_rh", x2, 45); updateDotPos("b_lh", x1, 45); updateDotPos("b_rh", x2, 45);
-}
-function brUpdateUp(y) {
-  document.getElementById("boyRightArm").setAttribute("d", `M68,55 C80,35 78,20 72,${y} C68,20 70,40 65,55 Z`);
-}
-function updateDotPos(id, x, y) {
-  const el = document.getElementById(id); if(el) { el.setAttribute("cx", x); el.setAttribute("cy", y); }
-}
-function resetJointDots() { document.querySelectorAll('.joint-dot').forEach(dot => dot.classList.remove('joint-success')); }
-function lightUpJoints() {
-  let targets = ["g_lh", "g_rh", "b_lh", "b_rh"];
-  if(["run", "knees"].includes(currentAction)) targets = ["g_lk", "g_rk", "b_lk", "b_rk"];
-  targets.forEach(id => { const el = document.getElementById(id); if(el) el.classList.add('joint-success'); });
-}
-
-function newAction(){ changeActionTo((currentActionIndex + 1) % actionsList.length); }
-function updateComboUI() {
-  const el = document.getElementById("comboPanel");
-  if (comboCount >= 3) { el.style.display = "block"; el.innerText = `連擊: ${comboCount} 🔥`; if (comboCount > maxCombo) maxCombo = comboCount; }
-  else { el.style.display = "none"; }
-}
+function getActionChinese(act) { return { "reach": "雙手高舉過頭 🙌", "run": "原地輕鬆踏步 🏃", "knees": "交替抬高雙腿 ⚡", "star": "雙手雙腳大張 ⭐", "highlow": "摸天再向下蹲 ↕", "rolls": "緩慢轉動雙肩 🔄", "jacks": "雙手平舉開合 🕺", "clap": "胸前靠攏擊掌 👏", "sidebend": "身體往左側彎 🧘", "freeze": "全身保持定格 ❄" }[act] || "準備運動"; }
+function setUI(text, iconKey) { const prefix = { 1: '慢速引導：', 2: '標準節奏：', 3: '進階挑戰：', 4: '快速極限：' }[currentLevel]; document.getElementById("instruction-text").innerHTML = `<span class="speed-tip">${prefix}</span>${text}`; const svgEl = document.getElementById("visual-svg"); svgEl.innerHTML = svgTemplates[iconKey] || ""; }
+function setArmsUp(gl, gr, bl, br, ds, y) { gl.setAttribute("d", `M32,55 C20,35 22,20 28,${y} C32,20 30,40 35,55 Z`); gr.setAttribute("d", `M68,55 C80,35 78,20 72,${y} C68,20 70,40 65,55 Z`); bl.setAttribute("d", `M32,55 C20,35 22,20 28,${y} C32,20 30,40 35,55 Z`); br.setAttribute("d", `M68,55 C80,35 78,20 72,${y} C68,20 70,40 65,55 Z`); ds.forEach((id, i) => updateDotPos(id, i%2===0 ? 28 : 72, y)); }
+/* 略過其餘動態 SVG 骨架更新函式 */
+function setArmsDown(gl,gr,bl,br,ds){ gl.setAttribute("d","M35,55 C25,65 22,75 25,85 C30,75 32,65 35,55 Z"); gr.setAttribute("d","M65,55 C75,65 78,75 75,85 C70,75 68,65 65,55 Z"); bl.setAttribute("d","M35,55 C25,65 22,75 25,85 C30,75 32,65 35,55 Z"); br.setAttribute("d","M65,55 C75,65 78,75 75,85 C70,75 68,65 65,55 Z"); ds.forEach((id,i)=>updateDotPos(id,i%2===0?25:75,85)); }
+function setArmsOut(gl,gr,bl,br,ds){ gl.setAttribute("d","M35,55 C15,50 10,45 5,45 C10,55 20,58 35,55 Z"); gr.setAttribute("d","M65,55 C85,50 90,45 95,45 C90,55 80,58 65,55 Z"); bl.setAttribute("d","M35,55 C15,50 10,45 5,45 C10,55 20,58 35,55 Z"); br.setAttribute("d","M65,55 C85,50 90,45 95,45 C90,55 80,58 65,55 Z"); ds.forEach((id,i)=>updateDotPos(id,i%2===0?5:95,45)); }
+function dsUpdate(x1,x2){ updateDotPos("g_lh",x1,45); updateDotPos("g_rh",x2,45); updateDotPos("b_lh",x1,45); updateDotPos("b_rh",x2,45); }
+function brUpdateUp(y){ document.getElementById("boyRightArm").setAttribute("d",`M68,55 C80,35 78,20 72,${y} C68,20 70,40 65,55 Z`); }
+function updateDotPos(id,x,y){ const el=document.getElementById(id); if(el){el.setAttribute("cx",x); el.setAttribute("cy",y);} }
+function resetJointDots(){ document.querySelectorAll('.joint-dot').forEach(dot=>dot.classList.remove('joint-success')); }
+function lightUpJoints(){ let ts=["g_lh","g_rh","b_lh","b_rh"]; if(["run","knees"].includes(currentAction))ts=["g_lk","g_rk","b_lk","b_rk"]; ts.forEach(id=>{const el=document.getElementById(id); if(el)el.classList.add('joint-success');}); }
+function newAction(){ changeActionTo((currentActionIndex+1)%actionsList.length); }
+function updateComboUI(){ const el=document.getElementById("comboPanel"); if(comboCount>=3){el.style.display="block"; el.innerText=`連擊: ${comboCount} 🔥`; if(comboCount>maxCombo)maxCombo=comboCount;}else{el.style.display="none";}}
 
 function checkPose(kp) {
   const easeFactor = (currentLevel <= 2) ? 1.25 : 1.0;
-
   if (currentLevel === 4 && isDistractionActive && document.getElementById("instruction-container").classList.contains("distract-border")) {
     if(!last) return true;
-    let motion = 0;
-    kp.forEach((p, i) => motion += Math.abs(p.x - last[i].x) + Math.abs(p.y - last[i].y));
+    let motion = 0; kp.forEach((p, i) => motion += Math.abs(p.x - last[i].x) + Math.abs(p.y - last[i].y));
     return motion < (0.12 * easeFactor);
   }
-
   switch(currentAction) {
-    case "reach": 
-      return kp[4].y < kp[0].y * easeFactor && kp[7].y < kp[0].y * easeFactor;
-    case "run": 
-      return Math.abs(kp[13].y - kp[14].y) > (0.035 / easeFactor);
-    case "knees": 
-      return kp[13].y < kp[11].y * easeFactor || kp[14].y < kp[12].y * easeFactor;
-    case "star": 
-      return (kp[4].y < kp[11].y * easeFactor) && (Math.abs(kp[15].x - kp[16].x) > (0.24 / easeFactor));
-    case "highlow": 
-      return (kp[4].y < kp[11].y) || (kp[0].y > (0.55 / easeFactor));
-    case "rolls": 
-      if(!last) return false; 
-      return Math.abs(kp[11].y - last[11].y) > (0.012 / easeFactor);
-    case "jacks": 
-      return Math.abs(kp[15].x - kp[16].x) > (0.22 / easeFactor);
-    case "clap": 
-      return Math.abs(kp[4].x - kp[7].x) < (0.15 * easeFactor);
-    case "sidebend": 
-      return kp[4].y < kp[11].y * easeFactor && kp[7].x < kp[12].x * easeFactor;
-    case "freeze": 
-      if(!last) return true; 
-      let m = 0; 
-      kp.forEach((p, i) => m += Math.abs(p.x - last[i].x) + Math.abs(p.y - last[i].y)); 
-      return m < (0.15 * easeFactor);
-    default: 
-      return false;
+    case "reach": return kp[4].y < kp[0].y * easeFactor && kp[7].y < kp[0].y * easeFactor;
+    case "run": return Math.abs(kp[13].y - kp[14].y) > (0.035 / easeFactor);
+    case "knees": return kp[13].y < kp[11].y * easeFactor || kp[14].y < kp[12].y * easeFactor;
+    case "star": return (kp[4].y < kp[11].y * easeFactor) && (Math.abs(kp[15].x - kp[16].x) > (0.24 / easeFactor));
+    case "highlow": return (kp[4].y < kp[11].y) || (kp[0].y > (0.55 / easeFactor));
+    case "rolls": if(!last) return false; return Math.abs(kp[11].y - last[11].y) > (0.012 / easeFactor);
+    case "jacks": return Math.abs(kp[15].x - kp[16].x) > (0.22 / easeFactor);
+    case "clap": return Math.abs(kp[4].x - kp[7].x) < (0.15 * easeFactor);
+    case "sidebend": return kp[4].y < kp[11].y * easeFactor && kp[7].x < kp[12].x * easeFactor;
+    case "freeze": if(!last) return true; let m = 0; kp.forEach((p, i) => m += Math.abs(p.x - last[i].x) + Math.abs(p.y - last[i].y)); return m < (0.15 * easeFactor);
+    default: return false;
   }
 }
 
-function judgeTiming(){
-  const diff = Date.now() - beatWindow;
-  let basePerf = difficultyMatrix[currentLevel].beat;
-  if (diff <= basePerf) return "完美";
-  if (diff <= basePerf * 1.8) return "良好";
-  return "再接再厲";
-}
+function judgeTiming(){ const diff = Date.now() - beatWindow; let basePerf = difficultyMatrix[currentLevel].beat; if (diff <= basePerf) return "完美"; if (diff <= basePerf * 1.8) return "良好"; return "再接再厲"; }
+function showRating(text){ const rat = document.getElementById("rating"); rat.innerText = text; rat.style.opacity = 1; if(text === "完美") { rat.style.color = "#00FF88"; rat.style.textShadow = "0 0 25px #00FF88"; } if(text === "良好") { rat.style.color = "#FFD600"; rat.style.textShadow = "0 0 25px #FFD600"; } setTimeout(() => { if(rat.innerText === text) rat.style.opacity = 0; }, 400); }
+function scorePopUp(points){ const el = document.getElementById("scorePop"); el.innerText = "+" + points; el.style.opacity = 1; el.style.transform = "translate(-50%, -150%)"; setTimeout(() => { el.style.opacity = 0; el.style.transform = "translate(-50%,-50%)"; }, 400); }
+function particles(){ const gameScreen = document.getElementById("gameScreen"); for(let i=0; i<10; i++){ const p = document.createElement("div"); p.className = "particle"; p.style.left = (window.innerWidth / 2) + "px"; p.style.top = (window.innerHeight / 2) + "px"; const angle = Math.random() * Math.PI * 2, distance = 40 + Math.random() * 80; p.style.setProperty('--mx', `${Math.cos(angle) * distance}px`); p.style.setProperty('--my', `${Math.sin(angle) * distance}px`); gameScreen.appendChild(p); setTimeout(()=>p.remove(), 600); } }
 
-function showRating(text){
-  const rat = document.getElementById("rating"); rat.innerText = text; rat.style.opacity = 1;
-  if(text === "完美") { rat.style.color = "#00FF88"; rat.style.textShadow = "0 0 25px #00FF88"; }
-  if(text === "良好") { rat.style.color = "#FFD600"; rat.style.textShadow = "0 0 25px #FFD600"; }
-  setTimeout(() => { if(rat.innerText === text) rat.style.opacity = 0; }, 400);
-}
-
-function scorePopUp(points){
-  const el = document.getElementById("scorePop"); el.innerText = "+" + points; el.style.opacity = 1; el.style.transform = "translate(-50%, -150%)";
-  setTimeout(() => { el.style.opacity = 0; el.style.transform = "translate(-50%,-50%)"; }, 400);
-}
-
-function particles(){
-  const gameScreen = document.getElementById("gameScreen");
-  for(let i=0; i<10; i++){
-    const p = document.createElement("div"); p.className = "particle"; p.style.left = (window.innerWidth / 2) + "px"; p.style.top = (window.innerHeight / 2) + "px";
-    const angle = Math.random() * Math.PI * 2, distance = 40 + Math.random() * 80;
-    p.style.setProperty('--mx', `${Math.cos(angle) * distance}px`); p.style.setProperty('--my', `${Math.sin(angle) * distance}px`);
-    gameScreen.appendChild(p); setTimeout(()=>p.remove(), 600);
-  }
-}
-
+// ===== 🚀 核心重構與安全鏡頭初始化邏輯 =====
 async function startGame(){
-  // 啟動音訊
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   mainVolumeNode = audioCtx.createGain(); mainVolumeNode.gain.setValueAtTime(0.5, audioCtx.currentTime); mainVolumeNode.connect(audioCtx.destination);
 
@@ -675,45 +535,48 @@ async function startGame(){
   canvasEl.height = window.innerHeight;
   const videoEl = document.getElementById("video");
 
-  // 【修正 1】優先獲取鏡頭媒體流，保障基本畫面能運作
+  // 【核心修正 1】優先獲取硬體鏡頭媒體流，避開 SDK 卡死阻塞
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ 
-      video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" }, 
+      video: { 
+        width: { ideal: 640 }, 
+        height: { ideal: 480 }, 
+        facingMode: "user" 
+      }, 
       audio: false 
     });
     videoEl.srcObject = stream;
     await videoEl.play();
   } catch (err) {
-    alert("無法啟動鏡頭，請檢查權限設定：" + err.message);
+    console.error("鏡頭授權或啟動失敗:", err);
+    document.getElementById("instruction-text").innerText = "❌ 無法啟動鏡頭，請檢查瀏覽器權限設定。";
     return;
   }
 
-  // 【修正 2】將 SDK 初始化放入 try-catch 區塊，若憑證無效則轉為原生 Canvas 備用渲染
+  // 【核心修正 2】安全隔離 BytePlus SDK 初始化
   try {
     effectEngine = new BytePlusEffectsSDK.EffectEngine({
       canvas: canvasEl,
-      licenseData: "YOUR_BYTEPLUS_LICENSE_BASE64_STRING" 
+      licenseData: "YOUR_BYTEPLUS_LICENSE_BASE64_STRING" // ⚠️ 請在此處放上你有效的 Base64 憑證
     });
     await effectEngine.init();
     await effectEngine.enableAlgorithm(BytePlusEffectsSDK.AlgorithmType.SKELETON);
-    useFallbackVideo = false;
+    isFallbackActive = false;
   } catch (sdkErr) {
-    console.warn("BytePlus SDK 初始化失敗，已切換至普通鏡頭預覽模式 (無 AI 骨骼識別)：", sdkErr);
-    useFallbackVideo = true;
+    console.warn("BytePlus SDK 未能成功激活（可能授權碼無效），已無縫切換至備用普通鏡頭引導模式:", sdkErr);
+    isFallbackActive = true;
   }
 
-  // 【修正 3】重構主渲染迴圈，確保無論 SDK 能否解算，畫面一定會畫出來
+  // 【核心修正 3】高防禦性即時渲染 Pipeline 迴圈
   function processBytePlusFrameLoop() {
     if (!videoEl.paused && !videoEl.ended) {
-      if(currentAction === "freeze") canvasEl.classList.add("freeze-effect");
-      else canvasEl.classList.remove("freeze-effect");
-
-      if (useFallbackVideo) {
-        // Fallback 模式：手動將鏡頭影像畫到畫面上，維持基本視像運作
+      if (isFallbackActive) {
+        // Fallback 模式：手動將原生鏡頭影像渲染至 Canvas，確保長者一定睇到自己
+        ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
         ctx.drawImage(videoEl, 0, 0, canvasEl.width, canvasEl.height);
         requestAnimationFrame(processBytePlusFrameLoop);
       } else {
-        // AI SDK 模式
+        // AI SDK 模式：調用演算法解算
         effectEngine.processVideoFrame(videoEl).then((results) => {
           if (results && results.skeletonData && results.skeletonData.keypoints) {
             const kp = results.skeletonData.keypoints;
@@ -743,15 +606,17 @@ async function startGame(){
           }
           requestAnimationFrame(processBytePlusFrameLoop);
         }).catch(err => {
-          // 容錯機制
+          // 運行中發生突發非致命錯誤時自動回退渲染，保證不黑屏
           ctx.drawImage(videoEl, 0, 0, canvasEl.width, canvasEl.height);
           requestAnimationFrame(processBytePlusFrameLoop);
         });
       }
+    } else {
+      requestAnimationFrame(processBytePlusFrameLoop);
     }
   }
 
-  // 啟動渲染與計時
+  // 啟動主渲染 Pipeline
   processBytePlusFrameLoop();
 
   timerInterval = setInterval(() => {
