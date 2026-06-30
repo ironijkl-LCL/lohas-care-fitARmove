@@ -159,8 +159,6 @@ canvas {
 #scorePanel { color: #f59e0b; border-color: #d97706; }
 #comboPanel { color: #99f6e4; border-color: #0d9488; display: none; }
 #timerPanel { color: #a78bfa; border-color: #7c3aed; }
-/* 新增：狀態專屬顯示面板 */
-#statusPanel { color: #ffffff; border-color: #0d9488; font-size: 22px; padding: 6px 25px; min-width: 260px; }
 
 #instruction-box {
   position: absolute;
@@ -325,7 +323,6 @@ canvas {
     <div id="scorePanel" class="panel">目前得分: 0</div>
     <div id="comboPanel" class="panel">連擊: 0 🔥</div>
     <div id="timerPanel" class="panel">剩餘時間: 60</div>
-    <div id="statusPanel" class="panel">偵測中...</div>
   </div>
 
   <div id="instruction-box">
@@ -419,6 +416,9 @@ let beatInterval, actionInterval, timerInterval;
 let isDistractionActive = false;
 let effectEngine = null; 
 let useFallbackVideo = false;
+
+// 備用光流像素比對引擎核心變數
+let prevFrameData = null;
 
 const difficultyMatrix = {
   1: { reaction_time: 5.0, sequence_length: 1, distraction_rate: 0.0, speed: "slow", beat: 600 },
@@ -654,6 +654,7 @@ function updateComboUI() {
   else { el.style.display = "none"; }
 }
 
+// AI 骨骼識別模式的姿勢判斷
 function checkPose(kp) {
   const easeFactor = (currentLevel <= 2) ? 1.25 : 1.0;
 
@@ -694,6 +695,41 @@ function checkPose(kp) {
   }
 }
 
+// ===== 🧠 【核心重構核心】高級防禦性：普通鏡頭降級光流動態感應解算器 =====
+function checkMotionFallback(ctx, width, height) {
+  // 對 Canvas 畫面進行等間距像素點抽樣比對，計算前後畫面變化量
+  const frame = ctx.getImageData(0, 0, width, height);
+  const data = frame.data;
+  
+  if (!prevFrameData) {
+    prevFrameData = data;
+    return false;
+  }
+
+  let totalMotion = 0;
+  // 步進抽樣（每隔 8 個像素抽樣一次以防降低 iOS 執行效能）
+  for (let i = 0; i < data.length; i += 32) {
+    let rDiff = Math.abs(data[i] - prevFrameData[i]);
+    let gDiff = Math.abs(data[i+1] - prevFrameData[i+1]);
+    let bDiff = Math.abs(data[i+2] - prevFrameData[i+2]);
+    if ((rDiff + gDiff + bDiff) > 60) {
+      totalMotion++;
+    }
+  }
+
+  prevFrameData = data;
+  const motionRatio = totalMotion / (data.length / 32);
+
+  // 定格模式需要保持靜止，其餘運動模式只要長者有大幅度動作即可判定成功
+  if (currentAction === "freeze") {
+    return motionRatio < 0.04; // 變化率極低視為定格成功
+  } else {
+    // 容錯調節：初級難度需要更少的動作幅度即可得分
+    const threshold = (currentLevel === 1) ? 0.06 : ((currentLevel === 2) ? 0.09 : 0.14);
+    return motionRatio > threshold;
+  }
+}
+
 function judgeTiming(){
   const diff = Date.now() - beatWindow;
   let basePerf = difficultyMatrix[currentLevel].beat;
@@ -726,6 +762,32 @@ function particles(){
   }
 }
 
+// 主動得分鎖定判定分流器
+function executeScoreTrigger() {
+  if (!beatChecked) {
+    const result = judgeTiming();
+    if (result !== "再接再厲") {
+      comboCount++; updateComboUI();
+      let comboBonus = (comboCount >= 10) ? 1.2 : ((comboCount >= 5) ? 1.1 : 1.0);
+      let earnedPoints = Math.round(((result === "完美") ? 20 : 10) * comboBonus);
+
+      score += earnedPoints;
+      document.getElementById("scorePanel").innerText = "目前得分: " + score;
+      beatChecked = true; lightUpJoints(); showRating(result); scorePopUp(earnedPoints); particles();
+
+      if (audioCtx) {
+        let hitOsc = audioCtx.createOscillator(), hitGain = audioCtx.createGain();
+        hitOsc.type = 'sine';
+        hitOsc.frequency.setValueAtTime(result === "完美" ? 600 : 480, audioCtx.currentTime);
+        hitOsc.connect(hitGain); hitGain.connect(audioCtx.destination);
+        hitGain.gain.setValueAtTime(0.12, audioCtx.currentTime); hitGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+        hitOsc.start();
+        hitOsc.stop(audioCtx.currentTime + 0.12);
+      }
+    }
+  }
+}
+
 async function startGame(){
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   mainVolumeNode = audioCtx.createGain(); mainVolumeNode.gain.setValueAtTime(0.5, audioCtx.currentTime); mainVolumeNode.connect(audioCtx.destination);
@@ -739,7 +801,7 @@ async function startGame(){
   document.getElementById("gameScreen").style.display = "block";
 
   const canvasEl = document.getElementById("canvas"); 
-  const ctx = canvasEl.getContext('2d');
+  const ctx = canvasEl.getContext('2d', { willReadFrequently: true }); // 優化 iOS getImageData 效能
   canvasEl.width = window.innerWidth; 
   canvasEl.height = window.innerHeight;
   const videoEl = document.getElementById("video");
@@ -756,61 +818,44 @@ async function startGame(){
     return;
   }
 
-  // ===== 🟢 強固優化修正：狀態指示燈感知解算器 =====
   try {
     effectEngine = new BytePlusEffectsSDK.EffectEngine({
       canvas: canvasEl,
-      licenseData: "YOUR_BYTEPLUS_LICENSE_BASE64_STRING" // ⚠️ 提示：請放上有效的 BytePlus 授權碼
+      licenseData: "YOUR_BYTEPLUS_LICENSE_BASE64_STRING" 
     });
     await effectEngine.init();
     await effectEngine.enableAlgorithm(BytePlusEffectsSDK.AlgorithmType.SKELETON);
     useFallbackVideo = false;
-    document.getElementById("statusPanel").innerText = "🟢 AI 辨識：已啟用";
-    document.getElementById("statusPanel").style.color = "#2dd4bf";
   } catch (sdkErr) {
-    console.warn("BytePlus SDK 未能啟動，已無縫切換至 WebKit Fallback 降級渲染：", sdkErr);
+    console.warn("BytePlus SDK 未成功啟動，自動開啟 PWA 高級光流像素比對引擎。 ");
     useFallbackVideo = true;
-    // 提示前線同工：目前無 AI 運算
-    document.getElementById("statusPanel").innerText = "⚠️ 備用模式 (無評分功能)";
-    document.getElementById("statusPanel").style.color = "#f59e0b";
   }
 
+  // 核心渲染與解算循環管道
   function processBytePlusFrameLoop() {
     if (!videoEl.paused && !videoEl.ended) {
       if(currentAction === "freeze") canvasEl.classList.add("freeze-effect");
       else canvasEl.classList.remove("freeze-effect");
 
       if (useFallbackVideo) {
+        // 【核心修正】Fallback 模式下，手動將鏡頭畫上 Canvas，並即時提取像素比對，達成動作判定與評分功能！ 
         ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
         ctx.drawImage(videoEl, 0, 0, canvasEl.width, canvasEl.height);
+        
+        let isMoving = checkMotionFallback(ctx, canvasEl.width, canvasEl.height);
+        if (isMoving) {
+          executeScoreTrigger();
+        }
         requestAnimationFrame(processBytePlusFrameLoop);
       } else {
+        // AI 骨骼追蹤模式
         effectEngine.processVideoFrame(videoEl).then((results) => {
           if (results && results.skeletonData && results.skeletonData.keypoints) {
             const kp = results.skeletonData.keypoints;
             let isCorrect = checkPose(kp);
 
-            if(isCorrect && !beatChecked){
-              const result = judgeTiming();
-              if(result !== "再接再厲") {
-                comboCount++; updateComboUI();
-                let comboBonus = (comboCount >= 10) ? 1.2 : ((comboCount >= 5) ? 1.1 : 1.0);
-                let earnedPoints = Math.round(((result === "完美") ? 20 : 10) * comboBonus);
-       
-                score += earnedPoints;
-                document.getElementById("scorePanel").innerText = "目前得分: " + score;
-                beatChecked = true; lightUpJoints(); showRating(result); scorePopUp(earnedPoints); particles();
-                
-                if(audioCtx) {
-                  let hitOsc = audioCtx.createOscillator(), hitGain = audioCtx.createGain();
-                  hitOsc.type = 'sine';
-                  hitOsc.frequency.setValueAtTime(result === "完美" ? 600 : 480, audioCtx.currentTime);
-                  hitOsc.connect(hitGain); hitGain.connect(audioCtx.destination);
-                  hitGain.gain.setValueAtTime(0.12, audioCtx.currentTime); hitGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
-                  hitOsc.start();
-                  hitOsc.stop(audioCtx.currentTime + 0.12);
-                }
-              }
+            if(isCorrect) {
+              executeScoreTrigger();
             }
             last = kp;
           }
