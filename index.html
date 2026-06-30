@@ -2,6 +2,7 @@
 <html lang="zh-HK">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
 <title>FitAR 動活+ | 智慧 AI 辨識與視覺提示升級版</title>
 
 <style>
@@ -11,6 +12,13 @@ body {
   background:black;
   color:white;
   overflow:hidden;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  -webkit-overflow-scrolling: touch;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 /* ===== 共用畫面 ===== */
@@ -26,7 +34,7 @@ body {
 }
 
 #startScreen {
-  background: linear-gradient(#07332f, #0d9488, #115e59); /* 基於主色調 Teal 的優雅漸變背景 */
+  background: linear-gradient(#07332f, #0d9488, #115e59);
   overflow-y: auto;
   padding: 20px 0;
 }
@@ -34,12 +42,12 @@ body {
 #startScreen h1 {
   font-size: 60px;
   margin-bottom: 5px;
-  text-shadow: 0 0 15px #2dd4bf; /* Mint Neon 閃爍 */
+  text-shadow: 0 0 15px #2dd4bf;
 }
 
 #startScreen h2 {
   font-size: 32px;
-  color: #ccfbf1; /* Light Teal 薄荷淺綠 */
+  color: #ccfbf1;
   margin-top: 0;
   margin-bottom: 25px;
   font-weight: bold;
@@ -60,7 +68,6 @@ body {
   margin-bottom: 20px;
 }
 
-/* 長者大按鈕（基於 Mint & Light Teal 高對比低刺眼設計） */
 .opt-btn {
   padding: 15px 35px;
   border: 3px solid rgba(204, 251, 241, 0.4);
@@ -72,24 +79,24 @@ body {
   font-weight: bold;
   transition: all 0.2s;
   min-width: 160px;
+  -webkit-appearance: none;
+  -webkit-tap-highlight-color: transparent;
 }
 .opt-btn:hover {
   background: rgba(45, 212, 191, 0.3);
   transform: scale(1.03);
 }
-/* 激活狀態：完美對齊主色調 #0d9488 */
 .opt-btn.active {
   background: #0d9488 !important;
   color: white !important;
-  border-color: #99f6e4 !important; /* bg-teal-50 / Light Teal 邊框拉開層次 */
+  border-color: #99f6e4 !important;
   box-shadow: 0 0 25px rgba(13, 148, 136, 0.8);
 }
 
-/* 難度色彩憲章（融入主色調、輔助色與警示色調配） */
-#lv-1.active { background: #2dd4bf !important; color: black !important; box-shadow: 0 0 20px rgba(45, 212, 191, 0.6); }  /* Mint */
-#lv-2.active { background: #0d9488 !important; color: white !important; box-shadow: 0 0 20px rgba(13, 148, 136, 0.6); }  /* Teal 主色 */
-#lv-3.active { background: #d97706 !important; color: white !important; box-shadow: 0 0 20px rgba(217, 119, 6, 0.6); }  /* Amber 琥珀橙 */
-#lv-4.active { background: #7c3aed !important; color: white !important; box-shadow: 0 0 20px rgba(124, 58, 237, 0.6); }  /* Purple 優雅紫 */
+#lv-1.active { background: #2dd4bf !important; color: black !important; box-shadow: 0 0 20px rgba(45, 212, 191, 0.6); }
+#lv-2.active { background: #0d9488 !important; color: white !important; box-shadow: 0 0 20px rgba(13, 148, 136, 0.6); }
+#lv-3.active { background: #d97706 !important; color: white !important; box-shadow: 0 0 20px rgba(217, 119, 6, 0.6); }
+#lv-4.active { background: #7c3aed !important; color: white !important; box-shadow: 0 0 20px rgba(124, 58, 237, 0.6); }
 
 .start-game-btn {
   padding: 22px 60px;
@@ -97,7 +104,7 @@ body {
   border-radius: 50px;
   font-size: 32px;
   cursor: pointer;
-  background: #d97706; /* 採用 Amber 琥珀橙作為顯眼的主行動點（警示色/高對比） */
+  background: #d97706; 
   color: white;
   font-weight: bold;
   box-shadow: 0 0 25px rgba(217, 119, 6, 0.5);
@@ -105,6 +112,8 @@ body {
   width: 420px;
   text-align: center;
   margin-top: 15px;
+  -webkit-appearance: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* ===== 遊戲畫面 ===== */
@@ -138,7 +147,7 @@ canvas {
 .panel {
   padding: 12px 35px;
   border-radius: 25px;
-  background: rgba(4, 47, 46, 0.9); /* 薄荷深色背景，提供極致高對比 */
+  background: rgba(4, 47, 46, 0.9);
   font-size: 30px;
   font-weight: bold;
   border: 3px solid #0d9488;
@@ -146,10 +155,12 @@ canvas {
   min-width: 260px;
 }
 
-#modePanel { color: #2dd4bf; border-color: #2dd4bf; }    /* Mint */
-#scorePanel { color: #f59e0b; border-color: #d97706; }   /* Amber */
-#comboPanel { color: #99f6e4; border-color: #0d9488; display: none; } /* Light Teal */
-#timerPanel { color: #a78bfa; border-color: #7c3aed; }   /* Purple */
+#modePanel { color: #2dd4bf; border-color: #2dd4bf; }
+#scorePanel { color: #f59e0b; border-color: #d97706; }
+#comboPanel { color: #99f6e4; border-color: #0d9488; display: none; }
+#timerPanel { color: #a78bfa; border-color: #7c3aed; }
+/* 新增：狀態專屬顯示面板 */
+#statusPanel { color: #ffffff; border-color: #0d9488; font-size: 22px; padding: 6px 25px; min-width: 260px; }
 
 #instruction-box {
   position: absolute;
@@ -166,9 +177,9 @@ canvas {
   align-items: center;
   gap: 20px;
   padding: 15px 40px;
-  background: rgba(4, 47, 46, 0.95); /* bg-teal-950 概念 */
+  background: rgba(4, 47, 46, 0.95);
   border-radius: 40px;
-  border: 4px solid #0d9488; /* 主色調邊框 */
+  border: 4px solid #0d9488;
   box-shadow: 0 0 25px rgba(13, 148, 136, 0.6);
 }
 
@@ -190,7 +201,6 @@ canvas {
   letter-spacing: 2px;
 }
 
-/* 警示色：用優雅紫與琥珀橙交織的震撼閃爍干擾框 */
 .distract-border {
   border-color: #7c3aed !important;
   box-shadow: 0 0 30px #d97706 !important;
@@ -205,9 +215,8 @@ canvas {
   100% { transform: translateX(0); }
 }
 
-.speed-tip { color: #f59e0b; text-shadow: 0 0 10px #d97706; } /* Amber */
+.speed-tip { color: #f59e0b; text-shadow: 0 0 10px #d97706; }
 
-/* ===== 🤖 真人比例科技感教練核心樣式（量子藍綠流光版） ===== */
 #coachContainer {
   position: absolute;
   bottom: 10px;
@@ -221,7 +230,7 @@ canvas {
 
 .avatar-coach { 
   width: 360px; 
-  height: 480px; /* 7.5頭身黃金真人比例 */
+  height: 480px;
 }
 
 .avatar-coach path, .avatar-coach polygon, .avatar-coach ellipse {
@@ -230,15 +239,15 @@ canvas {
 
 .joint-dot { 
   fill: #042f2e; 
-  stroke: #2dd4bf; /* Mint 霓虹邊圈 */
+  stroke: #2dd4bf; 
   stroke-width: 2.5;
   r: 5px;
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .joint-success { 
-  fill: #99f6e4 !important; /* Light Teal 內核 */
-  stroke: #0d9488 !important; /* Teal 主色流光 */
+  fill: #99f6e4 !important; 
+  stroke: #0d9488 !important; 
   stroke-width: 3px !important;
   r: 9px !important; 
   filter: drop-shadow(0 0 15px #2dd4bf) drop-shadow(0 0 5px #fff);
@@ -251,7 +260,7 @@ canvas {
   transform: translate(-50%, -50%) scale(1);
   width: 250px;
   height: 250px;
-  border: 4px solid rgba(45, 212, 191, 0.4); /* Mint 脈衝圈 */
+  border: 4px solid rgba(45, 212, 191, 0.4); 
   border-radius: 50%;
   z-index: 3;
   pointer-events: none;
@@ -268,12 +277,12 @@ canvas {
 .particle { position:absolute; width:12px; height:12px; background:#2dd4bf; border-radius:50%; z-index: 6; pointer-events: none; animation: particleMove 0.7s forwards; }
 @keyframes particleMove { to { transform: translate(var(--mx), var(--my)); opacity:0; } }
 
-#endScreen { display:none; background:#022c22; } /* 深藍綠結算背景 */
+#endScreen { display:none; background:#022c22; }
 #finalScore { font-size: 55px; margin-bottom: 20px; text-align: center; line-height: 1.5; }
 #performanceReview { font-size: 32px; color: #ccfbf1; margin-bottom: 40px; font-weight: bold; text-align: center; }
 
 .freeze-effect {
-  filter: saturate(0.6) hue-rotate(90deg) brightness(1.1); /* 對齊藍綠冷色系定格效果 */
+  filter: saturate(0.6) hue-rotate(90deg) brightness(1.1);
   transition: filter 0.3s;
 }
 </style>
@@ -316,6 +325,7 @@ canvas {
     <div id="scorePanel" class="panel">目前得分: 0</div>
     <div id="comboPanel" class="panel">連擊: 0 🔥</div>
     <div id="timerPanel" class="panel">剩餘時間: 60</div>
+    <div id="statusPanel" class="panel">偵測中...</div>
   </div>
 
   <div id="instruction-box">
@@ -362,7 +372,9 @@ canvas {
     <svg class="avatar-coach" id="boyCoach" viewBox="0 0 120 160">
       <defs>
         <linearGradient id="bTorsoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#7c3aed" stop-opacity="0.85"/> <stop offset="100%" stop-color="#d97706" stop-opacity="0.85"/> </linearGradient>
+          <stop offset="0%" stop-color="#7c3aed" stop-opacity="0.85"/>
+          <stop offset="100%" stop-color="#d97706" stop-opacity="0.85"/>
+        </linearGradient>
         <linearGradient id="bLimbGrad" x1="0%" y1="0%" x2="0%" y2="100%">
           <stop offset="0%" stop-color="#f59e0b"/>
           <stop offset="100%" stop-color="#7c3aed"/>
@@ -385,7 +397,7 @@ canvas {
   <div id="rating"></div>
   <div id="scorePop">+20</div>
 
-  <video id="video" style="display:none;" playsinline muted></video>
+  <video id="video" style="display:none;" playsinline autoplay muted></video>
   <canvas id="canvas"></canvas>
 </div>
 
@@ -541,7 +553,6 @@ function changeActionTo(index) {
 
   setUI(uiText, iconKey);
 
-  // 真人體型幾何解算分流
   if (currentAction === "reach" || currentAction === "freeze") {
     gLA.setAttribute("d", "M44,38 L38,20 L40,4");    gRA.setAttribute("d", "M76,38 L82,20 L80,4");
     bLA.setAttribute("d", "M40,36 L34,18 L36,4");    bRA.setAttribute("d", "M80,36 L86,18 L84,4");
@@ -566,7 +577,7 @@ function changeActionTo(index) {
     gLA.setAttribute("d", "M44,38 L22,28 L6,18");     gRA.setAttribute("d", "M76,38 L98,28 L114,18");
     bLA.setAttribute("d", "M40,36 L18,26 L4,16");     bRA.setAttribute("d", "M80,36 L102,26 L116,16");
     gLL.setAttribute("d", "M50,82 L28,114 L14,148");  gRL.setAttribute("d", "M70,82 L92,114 L106,148");
-    bLL.setAttribute("d", "M48,82 L26,114 L12,148");  bRL.setAttribute("d", "M72,82 L94,114 Dynamic L108,148");
+    bLL.setAttribute("d", "M48,82 L26,114 L12,148");  bRL.setAttribute("d", "M72,82 L94,114 L108,148");
     updateAllDots(6, 18, 114, 18, 28, 114, 92, 114);
   } 
   else if (currentAction === "highlow") {
@@ -745,17 +756,23 @@ async function startGame(){
     return;
   }
 
+  // ===== 🟢 強固優化修正：狀態指示燈感知解算器 =====
   try {
     effectEngine = new BytePlusEffectsSDK.EffectEngine({
       canvas: canvasEl,
-      licenseData: "YOUR_BYTEPLUS_LICENSE_BASE64_STRING" 
+      licenseData: "YOUR_BYTEPLUS_LICENSE_BASE64_STRING" // ⚠️ 提示：請放上有效的 BytePlus 授權碼
     });
     await effectEngine.init();
     await effectEngine.enableAlgorithm(BytePlusEffectsSDK.AlgorithmType.SKELETON);
     useFallbackVideo = false;
+    document.getElementById("statusPanel").innerText = "🟢 AI 辨識：已啟用";
+    document.getElementById("statusPanel").style.color = "#2dd4bf";
   } catch (sdkErr) {
-    console.warn("BytePlus SDK 初始化失敗，已切換至普通鏡頭預覽模式：", sdkErr);
+    console.warn("BytePlus SDK 未能啟動，已無縫切換至 WebKit Fallback 降級渲染：", sdkErr);
     useFallbackVideo = true;
+    // 提示前線同工：目前無 AI 運算
+    document.getElementById("statusPanel").innerText = "⚠️ 備用模式 (無評分功能)";
+    document.getElementById("statusPanel").style.color = "#f59e0b";
   }
 
   function processBytePlusFrameLoop() {
@@ -828,7 +845,7 @@ function endGame(){
   
   const videoEl = document.getElementById("video");
   if(videoEl && videoEl.srcObject) videoEl.srcObject.getTracks().forEach(track => track.stop());
-  if(audioCtx) audioCtx.close();
+  if(audioCtx) { try { audioCtx.close(); } catch(e){} }
 }
 
 window.addEventListener('resize', () => {
